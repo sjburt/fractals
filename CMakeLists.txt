@@ -17,6 +17,10 @@ endif()
 # Compile external dependencies 
 add_subdirectory (external)
 
+if(CMAKE_COMPILER_IS_GNUCXX)
+   set(CMAKE_CXX_FLAGS "-std=c++11 -Wall")
+endif()
+
 if(INCLUDE_DISTRIB)
 	add_subdirectory(distrib)
 endif(INCLUDE_DISTRIB)
