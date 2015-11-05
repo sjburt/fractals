@@ -12,8 +12,8 @@ out vec4 diffuseColor;
 
 void main() {
     dvec2 c, z;
-	c = dvec2(aspect * (UV.x - 0.5) * scale - center.x,
-                      (UV.y - 0.5) * scale - center.y);
+	c = dvec2(aspect * (UV.x - 0.5) * scale + center.x,
+                      (UV.y - 0.5) * scale + center.y);
     z = c;
 	double dist;
 	int i = 0;

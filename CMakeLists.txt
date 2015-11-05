@@ -1,10 +1,10 @@
 # CMake entry point
-cmake_minimum_required (VERSION 2.6)
+cmake_minimum_required (VERSION 3.0)
 project (mandlebrots)
-
 find_package(OpenGL REQUIRED)
 
 set(CMAKE_CXX_FLAGS "-g -Wall")
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Compile external dependencies 
 add_subdirectory (external)
