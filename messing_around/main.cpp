@@ -27,13 +27,16 @@ using namespace std;
 static void framebuffer_cb(GLFWwindow* window, int width, int height);
 static void wheel_cb(GLFWwindow* window, double xoffset, double yoffset);
 
+#define VERSION 330
+
+
 GLFWwindow* window;
 unsigned int prog;
 
 bool mousedown;
 
 GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path){
-  
+
 	// Create the shaders
 	GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
 	GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
@@ -72,7 +75,7 @@ GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path
       glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
       printf("%s\n", &VertexShaderErrorMessage[0]);
     }
-    
+
     glAttachShader(ProgramID, VertexShaderID);
 
   }
@@ -276,7 +279,12 @@ RenderContext::RenderContext() {
   glBindVertexArray(VertexArrayID);
 
   // Create and compile our GLSL program from the shaders
+#if VERSION == 330
+  programID = LoadShaders("TransformVertexShader.glsl", "mand_single.glsl");
+#else
   programID = LoadShaders("TransformVertexShader.glsl", "mand.glsl");
+#endif
+
   if (!programID) exit(-1);
 
   // get a handle for the MVP input.
@@ -318,7 +326,7 @@ RenderContext::RenderContext() {
       };
 
   // Create one OpenGL texture
-  
+
   glGenTextures(1, &TextureID);
   // "Bind" the newly created texture : all future texture functions will modify this texture
   glBindTexture(GL_TEXTURE_1D, TextureID);
@@ -329,15 +337,15 @@ RenderContext::RenderContext() {
 
   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR); 
+  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   TextureLoc = glGetUniformLocation(programID, "colors");
 
-  
+
 }
 
 
 int RenderContext::render(void)
-{  
+{
   if (changed < 50) {
     iter = fast_iter;
   }
@@ -351,10 +359,14 @@ int RenderContext::render(void)
   glUseProgram(programID);
 
   set_uniform1i(programID, "iter", iter);
+  set_uniform1f(programID, "aspect", aspect_ratio);
+#if version == 330
+  set_uniform2f(programID, "center", float(cx), float(cy));
+  set_uniform1f(programID, "scale", float(cur_scale));
+#else
   set_uniform2d(programID, "center", cx, cy);
   set_uniform1d(programID, "scale", cur_scale);
-  set_uniform1f(programID, "aspect", aspect_ratio);
-  
+#endif
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_1D, TextureID);
   glUniform1i(TextureLoc, 0);
@@ -384,8 +396,7 @@ int RenderContext::render(void)
     );
 
   tm.Start();
-  
-  
+
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   glDisableVertexAttribArray(0);
@@ -403,7 +414,7 @@ int RenderContext::render(void)
     fast_iter = glm::clamp(int(fast_iter * mod), 100, 10000);
   }
   printf("\r %5f  %7.2f, %7.2f, %7i, %7E", aspect_ratio,  time, mod, iter, cur_scale);
-  
+
   return 0;
 
 }
@@ -413,15 +424,15 @@ void RenderContext::zoom(double yoffset) {
   cur_scale *= (yoffset < 0 ? 1.1 : (1/1.1));
   double xpos, ypos;
   int xsize, ysize;
-  
+
   glfwGetCursorPos(window, &xpos, &ypos);
   glfwGetWindowSize(window, &xsize, &ysize);
 
   auto center = glm::dvec2(cx, cy);
   auto pos = center + old_scale * glm::dvec2(0.5 - xpos / xsize, ypos / ysize - 0.5);
-  
+
   auto new_center = pos - (cur_scale/old_scale) * (pos - center);
-  
+
   cx = new_center.x;
   cy = new_center.y;
   changed = 0;
@@ -490,7 +501,7 @@ static void mouse_button_callback(GLFWwindow* window, int button, int action, in
 
 int main( void )
 {
-  
+
   do{
     context.render();
 	} // Check if the ESC key was pressed or the window was closed
