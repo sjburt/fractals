@@ -22,13 +22,10 @@ using namespace glm;
 using namespace std;
 
 
-#include <common/controls.hpp>
-
 static void framebuffer_cb(GLFWwindow* window, int width, int height);
 static void wheel_cb(GLFWwindow* window, double xoffset, double yoffset);
 
-#define VERSION 330
-
+// #define VERSION 330
 
 GLFWwindow* window;
 unsigned int prog;
@@ -280,9 +277,9 @@ RenderContext::RenderContext() {
 
   // Create and compile our GLSL program from the shaders
 #if VERSION == 330
-  programID = LoadShaders("TransformVertexShader.glsl", "mand_single.glsl");
+  programID = LoadShaders("passthrough.vert", "mand_single.frag");
 #else
-  programID = LoadShaders("TransformVertexShader.glsl", "mand.glsl");
+  programID = LoadShaders("passthrough.vert", "mand.frag");
 #endif
 
   if (!programID) exit(-1);
@@ -346,13 +343,8 @@ RenderContext::RenderContext() {
 
 int RenderContext::render(void)
 {
-  if (changed < 50) {
-    iter = fast_iter;
-  }
-  else {
-    iter = fast_iter;
-  }
-  changed++;
+  iter = fast_iter;
+
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -360,7 +352,7 @@ int RenderContext::render(void)
 
   set_uniform1i(programID, "iter", iter);
   set_uniform1f(programID, "aspect", aspect_ratio);
-#if version == 330
+#if VERSION == 330
   set_uniform2f(programID, "center", float(cx), float(cy));
   set_uniform1f(programID, "scale", float(cur_scale));
 #else
@@ -410,10 +402,8 @@ int RenderContext::render(void)
   float time = tm.Report();
 
   float mod = glm::clamp(28000.0f / time, .9f, 1.1f);
-  if (changed < 50) {
-    fast_iter = glm::clamp(int(fast_iter * mod), 100, 10000);
-  }
-  printf("\r %5f  %7.2f, %7.2f, %7i, %7E", aspect_ratio,  time, mod, iter, cur_scale);
+  fast_iter = glm::clamp(int(fast_iter * mod), 100, 60000);
+  printf("\r %5f  %7.2f, %7.2f, %7i, %7E                         ", aspect_ratio,  time, mod, iter, cur_scale);
 
   return 0;
 

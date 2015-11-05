@@ -1,4 +1,4 @@
-#version 130
+#version 330
 
 uniform vec2 center;
 uniform float scale;
@@ -26,11 +26,8 @@ void main() {
 		if (dist > 4.0) {
 		    break;
 		}
+
     }
 
-//	diffuseColor = (i==iter) ? vec4(0) : texture(colors, (float(i)/40.0));
-  diffuseColor = vec4(sin(.1 * float(i)),
-                      sin(.21 * float(i)),
-                      sin(.43 * float(i)),
-                      0.0);
+	diffuseColor = (i==iter) ? vec4(0,abs(z.x/2),abs(z.y/2),0) : texture(colors, (float(i)/40.0));
 }
