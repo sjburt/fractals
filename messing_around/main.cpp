@@ -24,7 +24,7 @@ using namespace std;
 static void framebuffer_cb(GLFWwindow* window, int width, int height);
 static void wheel_cb(GLFWwindow* window, double xoffset, double yoffset);
 
-// #define VERSION 330
+#define VERSION 330
 
 GLFWwindow* window;
 unsigned int prog;
@@ -400,7 +400,7 @@ int RenderContext::render(void)
 
   float mod = glm::clamp(16000.0f / time, .9f, 1.1f);
   fast_iter = glm::clamp(int(fast_iter * mod), 10, 1000);
-  // printf("\r %5f  %7.2f, %7.2f, %7i, %7E                         ", aspect_ratio,  time, mod, iter, cur_scale);
+  printf("\r %5f  %7.2f, %7.2f, %7i, %7E                         ", aspect_ratio,  time, mod, iter, cur_scale);
 
   return 0;
 
