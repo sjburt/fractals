@@ -1,1 +1,18 @@
-Please READ Tutorial 1 and don't build the tutorials yourself ! Use CMake instead. If you have a problem, read the FAQ.
+First make a build directory:
+
+    mkdir build
+
+then use cmake.
+
+    cd build
+    cmake ..
+    make   # or ninja or whatever
+
+To run, your working directory must include the shaders.
+
+something like this:
+
+    cd first_mandlebrot
+    ../build/first_mandlebrot/first_mandlebrot
+
+If you use Visual Studio (not tested lately, but should work) you need to set the working directory in the project settings.

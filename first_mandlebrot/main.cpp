@@ -213,7 +213,7 @@ class RenderContext {
   GLuint MatrixID, iterID;
   glm::mat4 Projection;
 
-  int iter = 1;
+  int iter = 10;
 
   double cx = -0.7, cy = 0.0;
   double cur_scale = 2.2;
@@ -391,8 +391,8 @@ int RenderContext::render(void) {
 
   float time = tm.Report();
 
-  float mod = glm::clamp(33000.0f / time, .5f, 1.01f);
-  iter = glm::clamp(int(iter * mod), 1, 10000) + 1;
+  float mod = glm::clamp(16000.0f / time, .9f, 1.1f);
+  iter = glm::clamp(int(iter * mod), 10, 10000) ;
   printf("\r %5f  %7.2f, %7.2f, %7i, %7E                         ",
          aspect_ratio, time, mod, iter, cur_scale);
 
@@ -449,6 +449,8 @@ void RenderContext::mouseposition(double x, double y) {
     dragstart_x = x;
     dragstart_y = y;
   }
+  auto pp = get_xy(x, y);
+  printf("\n %5f %5f\n", pp.x, pp.y);
 }
 
 RenderContext::~RenderContext(void) {
