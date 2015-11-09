@@ -44,6 +44,7 @@ GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path
   if (nullptr != vertex_file_path) {
     // Read the Vertex Shader code from the file
     std::string VertexShaderCode;
+    
     std::ifstream VertexShaderStream(vertex_file_path, std::ios::in);
     if (VertexShaderStream.is_open()) {
       std::string Line = "";
@@ -216,8 +217,9 @@ private:
   double cx = -0.7, cy = 0.0;
   double cur_scale = 1;
   float aspect_ratio;
-  int dragstart_x, dragstart_y;
-  int pos_x, pos_y;
+  double dragstart_x, dragstart_y;
+  double pos_x, pos_y;
+
 public:
   RenderContext(void);
   int render(void);
@@ -238,7 +240,7 @@ RenderContext::RenderContext() {
   }
 
   // Initialise GLFW
-  glfwWindowHint(GLFW_SAMPLES, 1);
+  glfwWindowHint(GLFW_SAMPLES, 4);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -318,8 +320,17 @@ RenderContext::RenderContext() {
     0xff, 0x33, 0, 0,
     0x33, 0x33, 0xff, 0,
     0xff, 0x33, 0x33, 0,
+    0x44, 0x88, 0xff, 0,
+    0x44, 0x44, 0xff, 0,
+    0xff, 0x44, 0x44, 0,
+    0x33, 0x88, 0xdd, 0,
+    0x33, 0x55, 0xdd, 0,
+    0xdd, 0x55, 0x33, 0,
+    0x33, 0x88, 0xdd, 0,
+    0x33, 0x33, 0xff, 0,
+    0xdd, 0x44, 0x44, 0,
     0x33, 0x88, 0xff, 0,
-      };
+  };
 
   // Create one OpenGL texture
 
@@ -329,7 +340,7 @@ RenderContext::RenderContext() {
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   // Give the image to OpenGL
 
-  glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, 4, 0, GL_RGBA, GL_UNSIGNED_BYTE, g_colors);
+  glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, 12, 0, GL_RGBA, GL_UNSIGNED_BYTE, g_colors);
 
   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -342,6 +353,7 @@ RenderContext::RenderContext() {
 
 int RenderContext::render(void)
 {
+  glfwGetCursorPos(window, &pos_x, &pos_y);
   iter = fast_iter;
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -407,13 +419,13 @@ int RenderContext::render(void)
 }
 
 glm::dvec2 RenderContext::get_xy(double x, double y) {
-  int xsize,ysize;
-  glfwGetFramebufferSize(window, &xsize, &ysize);
+  auto u = (x/screen_width);
+  auto v = (y/screen_height);
 
-  auto posx = cx + cur_scale * 2 * ((x/xsize-.5)),
-       posy = cy - cur_scale * 2 * ((y/ysize-.5)/aspect_ratio);
-
-  printf("\n%5f %5f %5.3f %5.3f\n", posx, posy, cx, cy);
+  auto posx = aspect_ratio * (u - .5) * cur_scale + cx;
+  auto posy =                (.5 - v) * cur_scale + cy;
+  
+  printf("\n %5f %5f %5f %5f %5.3f %5.3f\n", u, v, posx, posy, cx, cy);
 
   return glm::dvec2(posx, posy);
 
@@ -424,13 +436,13 @@ void RenderContext::zoom(double yoffset) {
   auto old_scale = cur_scale;
   auto center = glm::dvec2(cx,cy);
   auto pos = get_xy(pos_x, pos_y);
+
   cur_scale *= (yoffset < 0 ? 1.1 : (1/1.1));
 
-  auto new_center = pos + (cur_scale/old_scale) * (center - pos);
+  auto new_center = pos + (cur_scale/old_scale) * (center-pos);
 
   cx = new_center.x;
   cy = new_center.y;
-  changed = 0;
   // printf("\n cx %6f cy %6f xpos %6f ypos %6f xsize %6i ysize %6i posx %6f posy %6f \n",
 //    cx, cy, xpos, ypos, xsize, ysize, pos.x, pos.y);
 }
@@ -446,13 +458,24 @@ void RenderContext::reshape(GLFWwindow* window, int width, int height)
   printf("%4i %4i\n", width, height);
   glViewport(0, 0, (GLint)width, (GLint)height);
   aspect_ratio = (float)width / (float)height;
+  screen_width = width;
+  screen_height = height;
   render();
 }
 
 void RenderContext::mouseposition(double x, double y)
 {
-  pos_x = x; pos_y = y;
-  // get_xy(x, y);
+  if (mousedown) {
+    auto pos = get_xy(x, y);
+    auto startpos = get_xy(dragstart_x, dragstart_y);
+
+    auto new_center = glm::dvec2(cx,cy) + startpos - pos;
+    cx = new_center.x;
+    cy = new_center.y;
+    dragstart_x = x;
+    dragstart_y = y;
+    printf("moving\n");
+  }
 
 }
 
@@ -474,7 +497,6 @@ static void framebuffer_cb(GLFWwindow* window, int width, int height) {
 static void wheel_cb(GLFWwindow* window, double xoffset, double yoffset) {
   context.zoom(yoffset);
 }
-
 
 static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
   context.mouseposition(xpos, ypos);

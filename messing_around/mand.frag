@@ -13,7 +13,7 @@ out vec4 diffuseColor;
 void main() {
     dvec2 c, z;
 	c = dvec2(aspect * (UV.x - 0.5) * scale + center.x,
-                      (UV.y - 0.5) * scale + center.y);
+                       (UV.y - 0.5) * scale + center.y);
     z = c;
 	double dist;
 	int i = 0;
@@ -27,6 +27,6 @@ void main() {
         z = (A * z) + c;
     }
 
-    diffuseColor = (i==iter) ? vec4(0) : texture(colors, (float(i)/40.0));
+    diffuseColor = (i==iter) ? vec4(0) : texture(colors, (float(i)/200.0));
 
 }

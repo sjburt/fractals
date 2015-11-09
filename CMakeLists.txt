@@ -18,10 +18,10 @@ if(CMAKE_COMPILER_IS_GNUCXX)
 endif()
 
 include_directories(
-	external/glfw-3.0.3/include/GLFW/
+	SYSTEM
 	external/glm-0.9.4.0/
+	external/glfw-3.0.3/include/GLFW/
 	external/glew-1.9.0/include/
-	.
 )
 
 set(ALL_LIBS

@@ -27,7 +27,4 @@ void main() {
         z = (A * z) + c;
     }
     diffuseColor = (i==iter) ? vec4(0) : texture(colors, (float(i)/40.0));
-
-
-//	diffuseColor = (i==iter) ? vec4(0,abs(z.x/2),abs(z.y/2),0) : texture(colors, (float(i)/40.0));
 }
