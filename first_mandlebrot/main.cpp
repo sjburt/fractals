@@ -31,36 +31,37 @@ unsigned int prog;
 
 bool mousedown;
 
-GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path){
-
-	// Create the shaders
-	GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
-	GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
+GLuint LoadShaders(const char* vertex_file_path,
+                   const char* fragment_file_path) {
+  // Create the shaders
+  GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
+  GLuint FragmentShaderID = glCreateShader(GL_FRAGMENT_SHADER);
   GLuint ProgramID = glCreateProgram();
 
   GLint Result = GL_FALSE;
   int InfoLogLength;
-  
+
   if (nullptr != vertex_file_path) {
     // Read the Vertex Shader code from the file
     std::string VertexShaderCode;
-    
+
     std::ifstream VertexShaderStream(vertex_file_path, std::ios::in);
     if (VertexShaderStream.is_open()) {
       std::string Line = "";
-      while (getline(VertexShaderStream, Line))
-        VertexShaderCode += "\n" + Line;
+      while (getline(VertexShaderStream, Line)) VertexShaderCode += "\n" + Line;
       VertexShaderStream.close();
-    }
-    else {
-      printf("Impossible to open %s. Are you in the right directory ? Don't forget to read the FAQ !\n", vertex_file_path);
+    } else {
+      printf(
+          "Impossible to open %s. Are you in the right directory ? Don't "
+          "forget to read the FAQ !\n",
+          vertex_file_path);
       getchar();
       return 0;
     }
 
     // Compile Vertex Shader
     printf("Compiling shader : %s\n", vertex_file_path);
-    char const * VertexSourcePointer = VertexShaderCode.c_str();
+    char const* VertexSourcePointer = VertexShaderCode.c_str();
     glShaderSource(VertexShaderID, 1, &VertexSourcePointer, NULL);
     glCompileShader(VertexShaderID);
 
@@ -69,12 +70,12 @@ GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path
     glGetShaderiv(VertexShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
     if (InfoLogLength > 0) {
       std::vector<char> VertexShaderErrorMessage(InfoLogLength + 1);
-      glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL, &VertexShaderErrorMessage[0]);
+      glGetShaderInfoLog(VertexShaderID, InfoLogLength, NULL,
+                         &VertexShaderErrorMessage[0]);
       printf("%s\n", &VertexShaderErrorMessage[0]);
     }
 
     glAttachShader(ProgramID, VertexShaderID);
-
   }
 
   if (nullptr != fragment_file_path) {
@@ -89,7 +90,7 @@ GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path
     }
     // Compile Fragment Shader
     printf("Compiling shader : %s\n", fragment_file_path);
-    char const * FragmentSourcePointer = FragmentShaderCode.c_str();
+    char const* FragmentSourcePointer = FragmentShaderCode.c_str();
     glShaderSource(FragmentShaderID, 1, &FragmentSourcePointer, NULL);
     glCompileShader(FragmentShaderID);
 
@@ -98,108 +99,107 @@ GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path
     glGetShaderiv(FragmentShaderID, GL_INFO_LOG_LENGTH, &InfoLogLength);
     if (InfoLogLength > 0) {
       std::vector<char> FragmentShaderErrorMessage(InfoLogLength + 1);
-      glGetShaderInfoLog(FragmentShaderID, InfoLogLength, NULL, &FragmentShaderErrorMessage[0]);
+      glGetShaderInfoLog(FragmentShaderID, InfoLogLength, NULL,
+                         &FragmentShaderErrorMessage[0]);
       printf("%s\n", &FragmentShaderErrorMessage[0]);
     }
     glAttachShader(ProgramID, FragmentShaderID);
   }
 
-	// Link the program
-	printf("Linking program\n");
-	glLinkProgram(ProgramID);
+  // Link the program
+  printf("Linking program\n");
+  glLinkProgram(ProgramID);
 
-	// Check the program
-	glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
-	glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
-	if ( InfoLogLength > 0 ){
-		std::vector<char> ProgramErrorMessage(InfoLogLength+1);
-		glGetProgramInfoLog(ProgramID, InfoLogLength, NULL, &ProgramErrorMessage[0]);
-		printf("%s\n", &ProgramErrorMessage[0]);
-	}
+  // Check the program
+  glGetProgramiv(ProgramID, GL_LINK_STATUS, &Result);
+  glGetProgramiv(ProgramID, GL_INFO_LOG_LENGTH, &InfoLogLength);
+  if (InfoLogLength > 0) {
+    std::vector<char> ProgramErrorMessage(InfoLogLength + 1);
+    glGetProgramInfoLog(ProgramID, InfoLogLength, NULL,
+                        &ProgramErrorMessage[0]);
+    printf("%s\n", &ProgramErrorMessage[0]);
+  }
 
-	glDeleteShader(VertexShaderID);
-	glDeleteShader(FragmentShaderID);
+  glDeleteShader(VertexShaderID);
+  glDeleteShader(FragmentShaderID);
 
-	return ProgramID;
+  return ProgramID;
 }
 
-void set_uniform1f(unsigned int prog, const char *name, float val) {
+void set_uniform1f(unsigned int prog, const char* name, float val) {
   int loc = glGetUniformLocationARB(prog, name);
   if (loc != -1) {
     glUniform1f(loc, val);
   }
 }
-void set_uniform1d(unsigned int prog, const char *name, double val) {
+void set_uniform1d(unsigned int prog, const char* name, double val) {
   int loc = glGetUniformLocationARB(prog, name);
   if (loc != -1) {
     glUniform1d(loc, val);
   }
 }
-void set_uniform2f(unsigned int prog, const char *name, float v1, float v2) {
+void set_uniform2f(unsigned int prog, const char* name, float v1, float v2) {
   int loc = glGetUniformLocationARB(prog, name);
   if (loc != -1) {
     glUniform2f(loc, v1, v2);
   }
 }
-void set_uniform2d(unsigned int prog, const char *name, double v1, double v2) {
+void set_uniform2d(unsigned int prog, const char* name, double v1, double v2) {
   int loc = glGetUniformLocationARB(prog, name);
   if (loc != -1) {
     glUniform2d(loc, v1, v2);
   }
 }
 
-void set_uniform1i(unsigned int prog, const char *name, int val) {
+void set_uniform1i(unsigned int prog, const char* name, int val) {
   int loc = glGetUniformLocationARB(prog, name);
   if (loc != -1) {
     glUniform1i(loc, val);
   }
 }
 
-static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
-static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
-
-
+static void cursor_position_callback(GLFWwindow* window, double xpos,
+                                     double ypos);
+static void mouse_button_callback(GLFWwindow* window, int button, int action,
+                                  int mods);
 
 /// Measure shader execution time, and provide a report.
-class TimeMeasure {
-public:
-  /// Use this to create a static instance.
-  /// @param title A string used in the report.
-  TimeMeasure() : fQuery(0), fFirst(true) {}
-
+class TimeGL {
+ public:
+  TimeGL() : query(0), fresult(0.0), first_call(true) {}
   /// Start the timer.
-  void Start() {
-    if (fFirst) {
-      glGenQueries(1, &fQuery);
-      fFirst = false;
-      fresult = 0.0;
-    }
-    else {
-      GLuint result;
-      glGetQueryObjectuiv(fQuery, GL_QUERY_RESULT, &result);
-      fresult = result * 0.001;
-    }
-    glBeginQuery(GL_TIME_ELAPSED, fQuery);
-  }
-
+  void Start(void);
   /// Stop the timer.
-  void Stop(void) {
-    glEndQuery(GL_TIME_ELAPSED);
-  }
-
+  void Stop(void);
+  // get the time back(usec)
   float Report(void);
-private:
-  GLuint fQuery;
+
+ private:
+  GLuint query;
   float fresult;
-  bool fFirst;
+  bool first_call;
 };
 
-float TimeMeasure::Report(void) {
-  return fresult;
+void TimeGL::Start(void) {
+  if (first_call) {
+    glGenQueries(1, &query);
+    first_call = false;
+    fresult = 0.0;
+  }
+  glBeginQuery(GL_TIME_ELAPSED, query);
 }
 
+void TimeGL::Stop(void) {
+  glEndQuery(GL_TIME_ELAPSED);
+  GLuint result;
+  glGetQueryObjectuiv(query, GL_QUERY_RESULT, &result);
+  fresult = result * 0.001;
+}
+
+float TimeGL::Report(void) { return fresult; }
+
 class RenderContext {
-private:
+ private:
   glm::dvec2 get_xy(double x, double y);
   int screen_width = 1024;
   int screen_height = 768;
@@ -212,7 +212,8 @@ private:
   GLuint TextureID;
   GLuint MatrixID, iterID;
   glm::mat4 Projection;
-  int iter = 3000;
+
+  int iter = 1;
 
   double cx = -0.7, cy = 0.0;
   double cur_scale = 2.2;
@@ -220,7 +221,7 @@ private:
   double dragstart_x, dragstart_y;
   double pos_x, pos_y;
 
-public:
+ public:
   RenderContext(void);
   int render(void);
   void reshape(GLFWwindow* window, int width, int height);
@@ -229,12 +230,11 @@ public:
   void mouseposition(double x, double y);
   int changed = 0;
   ~RenderContext(void);
-  TimeMeasure tm;
+  TimeGL tm;
 };
 
 RenderContext::RenderContext() {
-  if (!glfwInit())
-  {
+  if (!glfwInit()) {
     fprintf(stderr, "Failed to initialize GLFW\n");
     exit(-1);
   }
@@ -244,22 +244,25 @@ RenderContext::RenderContext() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
+  
   screen_width = 1024;
   screen_height = 768;
-
+  aspect_ratio = float(screen_width) / float(screen_height);
   // Open a window and create its OpenGL context
-  window = glfwCreateWindow(screen_width, screen_height, "messin around", NULL, NULL);
+  window = glfwCreateWindow(screen_width, screen_height, "messin around", NULL,
+                            NULL);
 
   if (window == NULL) {
-    fprintf(stderr, "Failed to open GLFW window. If you have an Intel GPU, they are not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
+    fprintf(stderr,
+            "Failed to open GLFW window. If you have an Intel GPU, they are "
+            "not 3.3 compatible. Try the 2.1 version of the tutorials.\n");
     glfwTerminate();
     exit(-1);
   }
   glfwMakeContextCurrent(window);
 
   // Initialize GLEW
-  glewExperimental = true; // Needed for core profile
+  glewExperimental = true;  // Needed for core profile
 
   if (glewInit() != GLEW_OK) {
     fprintf(stderr, "Failed to initialize GLEW\n");
@@ -270,22 +273,20 @@ RenderContext::RenderContext() {
   glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
   glfwSetCursorPos(window, screen_width / 2, screen_height / 2);
 
-// setup the callbacks
+  // setup the callbacks
   glfwSetFramebufferSizeCallback(window, framebuffer_cb);
   glfwSetScrollCallback(window, wheel_cb);
   glfwSetCursorPosCallback(window, cursor_position_callback);
   glfwSetMouseButtonCallback(window, mouse_button_callback);
-  
-// init cursor pos
+
+  // init cursor pos
   glfwGetCursorPos(window, &pos_x, &pos_y);
   glfwGetCursorPos(window, &dragstart_x, &dragstart_y);
-
 
   glGenVertexArrays(1, &VertexArrayID);
   glBindVertexArray(VertexArrayID);
 
-
-  // Create and compile our GLSL program from the shaders
+// Create and compile our GLSL program from the shaders
 #if VERSION == 330
   programID = LoadShaders("passthrough.vert", "mand_single.frag");
 #else
@@ -301,55 +302,45 @@ RenderContext::RenderContext() {
   glfwSwapInterval(0);
   Projection = glm::ortho(1.0f, 1.0f, 1.0f, -1.0f);
 
-  const GLfloat g_vertex_buffer_data[] = {
-    -1,-1, 0, 1,
-    -1, 1, 0, 1,
-    1,-1, 0, 1,
-    1, 1, 0, 1,
-  };
+  // Make a square.
+  const GLfloat g_vertex_buffer_data[][4] = {
+      {-1, -1, 0, 1}, {-1, 1, 0, 1}, {1, -1, 0, 1}, {1, 1, 0, 1}};
 
   glGenBuffers(1, &vertexbuffer);
   glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data),
+               g_vertex_buffer_data, GL_STATIC_DRAW);
 
-  const GLfloat g_textcoords[] = {
-    0.0, 0.0,
-    0.0, 1.0,
-    1.0, 0.0,
-    1.0, 1.0
-  };
+  // These are the u,v coordinates of each vertex.
+  const GLfloat g_textcoords[][2] = {
+      {0.0, 0.0}, {0.0, 1.0}, {1.0, 0.0}, {1.0, 1.0}};
+
   glGenBuffers(1, &uvbuffer);
   glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-  glBufferData(GL_ARRAY_BUFFER, sizeof(g_textcoords), g_textcoords, GL_STATIC_DRAW);
-  int width, height;
-  glfwGetWindowSize(window, &width, &height);
-  aspect_ratio = float(width) / float(height);
+  glBufferData(GL_ARRAY_BUFFER, sizeof(g_textcoords), g_textcoords,
+               GL_STATIC_DRAW);
 
-  const GLubyte g_colors[]{
-    0xff, 0x33, 0, 0,
-    0x33, 0x33, 0xff, 0,
-    0xff, 0x33, 0x33, 0,
-    0x44, 0x88, 0xff, 0,
-    0x44, 0x44, 0xff, 0,
-    0xff, 0x44, 0x44, 0,
-    0x33, 0x88, 0xdd, 0,
-    0x33, 0x55, 0xdd, 0,
-    0xdd, 0x55, 0x33, 0,
-    0x33, 0x88, 0xdd, 0,
-    0x33, 0x33, 0xff, 0,
-    0xdd, 0x44, 0x44, 0,
-    0x33, 0x88, 0xff, 0,
-  };
-
-  // Create one OpenGL texture
+  // Create a 1-d texture to use as a color palette.
+  const GLubyte g_colors[][4] = {{0xff, 0x33, 0, 0},
+                                 {0x33, 0x33, 0xff, 0},
+                                 {0xff, 0x33, 0x33, 0},
+                                 {0x44, 0x88, 0xff, 0},
+                                 {0x44, 0x44, 0xff, 0},
+                                 {0xff, 0x44, 0x44, 0},
+                                 {0x33, 0x88, 0xdd, 0},
+                                 {0x33, 0x55, 0xdd, 0},
+                                 {0xdd, 0x55, 0x33, 0},
+                                 {0x33, 0x88, 0xdd, 0},
+                                 {0x33, 0x33, 0xff, 0},
+                                 {0xdd, 0x44, 0x44, 0},
+                                 {0x33, 0x88, 0xff, 0}};
 
   glGenTextures(1, &TextureID);
-  // "Bind" the newly created texture : all future texture functions will modify this texture
   glBindTexture(GL_TEXTURE_1D, TextureID);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  // Give the image to OpenGL
 
-  glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, 12, 0, GL_RGBA, GL_UNSIGNED_BYTE, g_colors);
+  glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, 12, 0, GL_RGBA, GL_UNSIGNED_BYTE,
+               g_colors);
 
   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -357,9 +348,7 @@ RenderContext::RenderContext() {
   TextureLoc = glGetUniformLocation(programID, "colors");
 }
 
-
-int RenderContext::render(void)
-{
+int RenderContext::render(void) {
   glfwGetCursorPos(window, &pos_x, &pos_y);
 
   tm.Start();
@@ -384,25 +373,11 @@ int RenderContext::render(void)
 
   glEnableVertexAttribArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-  glVertexAttribPointer(
-    0,
-    4,
-    GL_FLOAT,
-    GL_FALSE,
-    0,
-    (void*)0
-    );
+  glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
   glEnableVertexAttribArray(1);
   glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-  glVertexAttribPointer(
-    1,
-    2,
-    GL_FLOAT,
-    GL_FALSE,
-    0,
-    (void*)0
-    );
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
@@ -416,39 +391,39 @@ int RenderContext::render(void)
 
   float time = tm.Report();
 
-  float mod = glm::clamp(33000.0f / time, .5f, 2.0f);
-  iter = glm::clamp(int(iter * mod), 10, 10000);
-  printf("\r %5f  %7.2f, %7.2f, %7i, %7E                         ", aspect_ratio,  time, mod, iter, cur_scale);
+  float mod = glm::clamp(33000.0f / time, .5f, 1.01f);
+  iter = glm::clamp(int(iter * mod), 1, 10000) + 1;
+  printf("\r %5f  %7.2f, %7.2f, %7i, %7E                         ",
+         aspect_ratio, time, mod, iter, cur_scale);
 
   return 0;
-
 }
 
 glm::dvec2 RenderContext::get_xy(double x, double y) {
-  auto u = (x/screen_width);
-  auto v = (1 - y/screen_height);
+  auto u = (x / screen_width);
+  auto v = (1 - y / screen_height);
 
   auto posx = aspect_ratio * (u - .5) * cur_scale + cx;
-  auto posy =                (v - .5) * cur_scale + cy;
-  
+  auto posy = (v - .5) * cur_scale + cy;
+
   // printf("\n %5f %5f %5f %5f %5.3f %5.3f\n", u, v, posx, posy, cx, cy);
 
   return glm::dvec2(posx, posy);
 }
 
-
 void RenderContext::zoom(double yoffset) {
   auto old_scale = cur_scale;
-  auto center = glm::dvec2(cx,cy);
+  auto center = glm::dvec2(cx, cy);
   auto pos = get_xy(pos_x, pos_y);
 
-  cur_scale *= (yoffset < 0 ? 1.1 : (1/1.1));
+  cur_scale *= (yoffset < 0 ? 1.1 : (1 / 1.1));
 
-  auto new_center = pos + (cur_scale/old_scale) * (center-pos);
+  auto new_center = pos + (cur_scale / old_scale) * (center - pos);
 
   cx = new_center.x;
   cy = new_center.y;
-  // printf("\n cx %6f cy %6f xpos %6f ypos %6f xsize %6i ysize %6i posx %6f posy %6f \n",
+  // printf("\n cx %6f cy %6f xpos %6f ypos %6f xsize %6i ysize %6i posx %6f
+  // posy %6f \n",
   //    cx, cy, xpos, ypos, xsize, ysize, pos.x, pos.y);
 }
 
@@ -459,7 +434,7 @@ void RenderContext::startmove(void) {
 
 void RenderContext::reshape(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, (GLint)width, (GLint)height);
-  aspect_ratio = (float)width / (float)height;
+  aspect_ratio = float(width) / float(height);
   screen_width = width;
   screen_height = height;
   render();
@@ -467,7 +442,8 @@ void RenderContext::reshape(GLFWwindow* window, int width, int height) {
 
 void RenderContext::mouseposition(double x, double y) {
   if (mousedown) {
-    auto new_center = glm::dvec2(cx,cy) + get_xy(dragstart_x, dragstart_y) - get_xy(x, y);
+    auto new_center =
+        glm::dvec2(cx, cy) + get_xy(dragstart_x, dragstart_y) - get_xy(x, y);
     cx = new_center.x;
     cy = new_center.y;
     dragstart_x = x;
@@ -493,11 +469,13 @@ static void wheel_cb(GLFWwindow* window, double xoffset, double yoffset) {
   context.zoom(yoffset);
 }
 
-static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
+static void cursor_position_callback(GLFWwindow* window, double xpos,
+                                     double ypos) {
   context.mouseposition(xpos, ypos);
 }
 
-static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+static void mouse_button_callback(GLFWwindow* window, int button, int action,
+                                  int mods) {
   if (button == GLFW_MOUSE_BUTTON_1 && action == GLFW_PRESS) {
     mousedown = true;
     context.startmove();
@@ -507,18 +485,14 @@ static void mouse_button_callback(GLFWwindow* window, int button, int action, in
   }
 }
 
-
-int main( void )
-{
-
-  do{
+int main(void) {
+  do {
     context.render();
-	} // Check if the ESC key was pressed or the window was closed
-	while( glfwGetKey(window, GLFW_KEY_ESCAPE ) != GLFW_PRESS &&
-		   glfwWindowShouldClose(window) == 0 );
+  }  // Check if the ESC key was pressed or the window was closed
+  while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
+         glfwWindowShouldClose(window) == 0);
 
-  	// Close OpenGL window and terminate GLFW
-	glfwTerminate();
-	return 0;
+  // Close OpenGL window and terminate GLFW
+  glfwTerminate();
+  return 0;
 }
-
