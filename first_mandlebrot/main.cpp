@@ -18,6 +18,9 @@
 // Include GLM
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+
+#include "../common/text2D.hpp"
+
 using namespace glm;
 using namespace std;
 
@@ -31,7 +34,7 @@ unsigned int prog;
 
 bool mousedown;
 
-GLuint LoadShaders(const char* vertex_file_path,
+GLuint myLoadShaders(const char* vertex_file_path,
                    const char* fragment_file_path) {
   // Create the shaders
   GLuint VertexShaderID = glCreateShader(GL_VERTEX_SHADER);
@@ -288,9 +291,9 @@ RenderContext::RenderContext() {
 
 // Create and compile our GLSL program from the shaders
 #if VERSION == 330
-  programID = LoadShaders("passthrough.vert", "mand_single.frag");
+  programID = myLoadShaders("passthrough.vert", "mand_single.frag");
 #else
-  programID = LoadShaders("passthrough.vert", "mand.frag");
+  programID = myLoadShaders("passthrough.vert", "mand.frag");
 #endif
 
   if (!programID) exit(-1);
@@ -346,6 +349,11 @@ RenderContext::RenderContext() {
   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   TextureLoc = glGetUniformLocation(programID, "colors");
+
+
+  initText2D( "Holstein.DDS" );
+
+
 }
 
 int RenderContext::render(void) {
@@ -386,15 +394,18 @@ int RenderContext::render(void) {
   glDisableVertexAttribArray(0);
   glDisableVertexAttribArray(1);
 
+  static char text[256];
+  printText2D(text, 10, 50, 10);
   glfwSwapBuffers(window);
   glfwPollEvents();
 
   float time = tm.Report();
 
   float mod = glm::clamp(16000.0f / time, .9f, 1.1f);
-  iter = glm::clamp(int(iter * mod), 10, 10000) ;
-  printf("\r %5f  %7.2f, %7.2f, %7i, %7E                         ",
-         aspect_ratio, time, mod, iter, cur_scale);
+  
+  iter = glm::clamp(int(iter * mod), 10, 50000) ;
+  snprintf(text, sizeof(text), "%5.2fms, %7i, %7E, %6f, %6f",
+           time/1000, iter, cur_scale, cx, cy);
 
   return 0;
 }
@@ -449,8 +460,8 @@ void RenderContext::mouseposition(double x, double y) {
     dragstart_x = x;
     dragstart_y = y;
   }
-  auto pp = get_xy(x, y);
-  printf("\n %5f %5f\n", pp.x, pp.y);
+  // auto pp = get_xy(x, y);
+  // printf("\n %5f %5f\n", pp.x, pp.y);
 }
 
 RenderContext::~RenderContext(void) {
@@ -459,6 +470,7 @@ RenderContext::~RenderContext(void) {
   glDeleteProgram(programID);
   glDeleteTextures(1, &TextureLoc);
   glDeleteVertexArrays(1, &VertexArrayID);
+  cleanupText2D();
 }
 
 RenderContext context;
