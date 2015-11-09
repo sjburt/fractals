@@ -26,7 +26,5 @@ void main() {
         dmat2 A = dmat2(z.x, z.y, -z.y, z.x);
         z = (A * z) + c;
     }
-
     diffuseColor = (i==iter) ? vec4(0) : texture(colors, (float(i)/200.0));
-
 }

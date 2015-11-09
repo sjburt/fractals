@@ -24,7 +24,7 @@ using namespace std;
 static void framebuffer_cb(GLFWwindow* window, int width, int height);
 static void wheel_cb(GLFWwindow* window, double xoffset, double yoffset);
 
-#define VERSION 330
+// #define VERSION 330
 
 GLFWwindow* window;
 unsigned int prog;
@@ -40,7 +40,7 @@ GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path
 
   GLint Result = GL_FALSE;
   int InfoLogLength;
-
+  
   if (nullptr != vertex_file_path) {
     // Read the Vertex Shader code from the file
     std::string VertexShaderCode;
@@ -212,10 +212,10 @@ private:
   GLuint TextureID;
   GLuint MatrixID, iterID;
   glm::mat4 Projection;
-  int fast_iter = 3000, iter = 3000;
+  int iter = 3000;
 
   double cx = -0.7, cy = 0.0;
-  double cur_scale = 1;
+  double cur_scale = 2.2;
   float aspect_ratio;
   double dragstart_x, dragstart_y;
   double pos_x, pos_y;
@@ -260,6 +260,7 @@ RenderContext::RenderContext() {
 
   // Initialize GLEW
   glewExperimental = true; // Needed for core profile
+
   if (glewInit() != GLEW_OK) {
     fprintf(stderr, "Failed to initialize GLEW\n");
     exit(-1);
@@ -269,12 +270,20 @@ RenderContext::RenderContext() {
   glfwSetInputMode(window, GLFW_STICKY_KEYS, GL_TRUE);
   glfwSetCursorPos(window, screen_width / 2, screen_height / 2);
 
+// setup the callbacks
   glfwSetFramebufferSizeCallback(window, framebuffer_cb);
   glfwSetScrollCallback(window, wheel_cb);
   glfwSetCursorPosCallback(window, cursor_position_callback);
   glfwSetMouseButtonCallback(window, mouse_button_callback);
+  
+// init cursor pos
+  glfwGetCursorPos(window, &pos_x, &pos_y);
+  glfwGetCursorPos(window, &dragstart_x, &dragstart_y);
+
+
   glGenVertexArrays(1, &VertexArrayID);
   glBindVertexArray(VertexArrayID);
+
 
   // Create and compile our GLSL program from the shaders
 #if VERSION == 330
@@ -346,15 +355,14 @@ RenderContext::RenderContext() {
   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   TextureLoc = glGetUniformLocation(programID, "colors");
-
-
 }
 
 
 int RenderContext::render(void)
 {
   glfwGetCursorPos(window, &pos_x, &pos_y);
-  iter = fast_iter;
+
+  tm.Start();
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glUseProgram(programID);
@@ -396,22 +404,20 @@ int RenderContext::render(void)
     (void*)0
     );
 
-  tm.Start();
-
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+  tm.Stop();
 
   glDisableVertexAttribArray(0);
   glDisableVertexAttribArray(1);
 
-  tm.Stop();
   glfwSwapBuffers(window);
-
   glfwPollEvents();
 
   float time = tm.Report();
 
-  float mod = glm::clamp(16000.0f / time, .9f, 1.1f);
-  fast_iter = glm::clamp(int(fast_iter * mod), 10, 1000);
+  float mod = glm::clamp(33000.0f / time, .5f, 2.0f);
+  iter = glm::clamp(int(iter * mod), 10, 10000);
   printf("\r %5f  %7.2f, %7.2f, %7i, %7E                         ", aspect_ratio,  time, mod, iter, cur_scale);
 
   return 0;
@@ -420,15 +426,14 @@ int RenderContext::render(void)
 
 glm::dvec2 RenderContext::get_xy(double x, double y) {
   auto u = (x/screen_width);
-  auto v = (y/screen_height);
+  auto v = (1 - y/screen_height);
 
   auto posx = aspect_ratio * (u - .5) * cur_scale + cx;
-  auto posy =                (.5 - v) * cur_scale + cy;
+  auto posy =                (v - .5) * cur_scale + cy;
   
-  printf("\n %5f %5f %5f %5f %5.3f %5.3f\n", u, v, posx, posy, cx, cy);
+  // printf("\n %5f %5f %5f %5f %5.3f %5.3f\n", u, v, posx, posy, cx, cy);
 
   return glm::dvec2(posx, posy);
-
 }
 
 
@@ -444,18 +449,15 @@ void RenderContext::zoom(double yoffset) {
   cx = new_center.x;
   cy = new_center.y;
   // printf("\n cx %6f cy %6f xpos %6f ypos %6f xsize %6i ysize %6i posx %6f posy %6f \n",
-//    cx, cy, xpos, ypos, xsize, ysize, pos.x, pos.y);
+  //    cx, cy, xpos, ypos, xsize, ysize, pos.x, pos.y);
 }
 
-void RenderContext::startmove(void)
-{
+void RenderContext::startmove(void) {
   dragstart_x = pos_x;
   dragstart_y = pos_y;
 }
 
-void RenderContext::reshape(GLFWwindow* window, int width, int height)
-{
-  printf("%4i %4i\n", width, height);
+void RenderContext::reshape(GLFWwindow* window, int width, int height) {
   glViewport(0, 0, (GLint)width, (GLint)height);
   aspect_ratio = (float)width / (float)height;
   screen_width = width;
@@ -463,24 +465,17 @@ void RenderContext::reshape(GLFWwindow* window, int width, int height)
   render();
 }
 
-void RenderContext::mouseposition(double x, double y)
-{
+void RenderContext::mouseposition(double x, double y) {
   if (mousedown) {
-    auto pos = get_xy(x, y);
-    auto startpos = get_xy(dragstart_x, dragstart_y);
-
-    auto new_center = glm::dvec2(cx,cy) + startpos - pos;
+    auto new_center = glm::dvec2(cx,cy) + get_xy(dragstart_x, dragstart_y) - get_xy(x, y);
     cx = new_center.x;
     cy = new_center.y;
     dragstart_x = x;
     dragstart_y = y;
-    printf("moving\n");
   }
-
 }
 
-RenderContext::~RenderContext(void)
-{
+RenderContext::~RenderContext(void) {
   glDeleteBuffers(1, &vertexbuffer);
   glDeleteBuffers(1, &uvbuffer);
   glDeleteProgram(programID);

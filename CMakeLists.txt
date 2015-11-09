@@ -1,6 +1,6 @@
 # CMake entry point
 cmake_minimum_required (VERSION 3.0)
-project (mandlebrots)
+project (fractals)
 find_package(OpenGL REQUIRED)
 
 set(CMAKE_CXX_FLAGS "-g -Wall")
@@ -38,5 +38,5 @@ add_definitions(
 	-D_CRT_SECURE_NO_WARNINGS
 )
 
-# Messing Around
-add_subdirectory(messing_around)
+# First mandlebrot set. As naive as possible.
+add_subdirectory(first_mandlebrot)
