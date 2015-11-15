@@ -21,9 +21,6 @@
 
 #include "../common/text2D.hpp"
 
-using namespace glm;
-using namespace std;
-
 static void framebuffer_cb(GLFWwindow* window, int width, int height);
 static void wheel_cb(GLFWwindow* window, double xoffset, double yoffset);
 
@@ -169,7 +166,7 @@ static void mouse_button_callback(GLFWwindow* window, int button, int action,
 /// Measure shader execution time, and provide a report.
 class TimeGL {
  public:
-  TimeGL() : query(0), fresult(0.0), first_call(true) {}
+  TimeGL() : fResult(0.0), first_call(true) {}
   /// Start the timer.
   void Start(void);
   /// Stop the timer.
@@ -178,28 +175,75 @@ class TimeGL {
   float Report(void);
 
  private:
-  GLuint query;
-  float fresult;
+  GLuint query[1];
+  float fResult;
   bool first_call;
 };
 
 void TimeGL::Start(void) {
   if (first_call) {
-    glGenQueries(1, &query);
+    glGenQueries(1, query);
     first_call = false;
-    fresult = 0.0;
+    fResult = 0.0;
   }
-  glBeginQuery(GL_TIME_ELAPSED, query);
+  glBeginQuery(GL_TIME_ELAPSED, query[0]);
 }
 
 void TimeGL::Stop(void) {
   glEndQuery(GL_TIME_ELAPSED);
   GLuint result;
-  glGetQueryObjectuiv(query, GL_QUERY_RESULT, &result);
-  fresult = result * 0.001;
+  glGetQueryObjectuiv(query[0], GL_QUERY_RESULT, &result);
+  fResult = result * 0.001;
 }
 
-float TimeGL::Report(void) { return fresult; }
+class AtomicCounter {
+ public:
+  AtomicCounter(void){};
+  void init(void);
+  void reset(void);
+  glm::uvec3 read(void);
+  GLuint atomicsBuffer;
+};
+
+void AtomicCounter::init(void) {
+  // declare and generate a buffer object name
+  glGenBuffers(1, &atomicsBuffer);
+  // bind the buffer and define its initial storage capacity
+  glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomicsBuffer);
+  glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint) * 3, NULL,
+               GL_DYNAMIC_DRAW);
+  // unbind the buffer
+  glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+}
+
+void AtomicCounter::reset(void){
+  glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomicsBuffer);
+  GLuint a[3] = {0,0,0};
+  glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0 , sizeof(GLuint) * 3, a);
+  glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+}
+
+glm::uvec3 AtomicCounter::read(void) {
+  GLuint *userCounters;
+  glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomicsBuffer);
+  // again we map the buffer to userCounters, but this time for read-only access
+  userCounters = (GLuint*)glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER, 
+                                         0, 
+                                         sizeof(GLuint) * 3,
+                                         GL_MAP_READ_BIT
+                                        );
+  
+  // copy the values to other variables because...
+  
+  glm::uvec3 ret = glm::uvec3(userCounters[0], userCounters[1], userCounters[2]);
+  // ... as soon as we unmap the buffer
+  // the pointer userCounters becomes invalid.
+  glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
+  return ret;
+}
+
+
+float TimeGL::Report(void) { return fResult; }
 
 class RenderContext {
  private:
@@ -219,10 +263,15 @@ class RenderContext {
   int iter = 10;
 
   double cx = -0.7, cy = 0.0;
-  double cur_scale = 2.2;
+  double cur_scale = 1.1;
   float aspect_ratio;
   double dragstart_x, dragstart_y;
   double pos_x, pos_y;
+
+  TimeGL tm;
+  AtomicCounter ac;
+ 
+  char hud[256] = {0};
 
  public:
   RenderContext(void);
@@ -233,10 +282,11 @@ class RenderContext {
   void mouseposition(double x, double y);
   int changed = 0;
   ~RenderContext(void);
-  TimeGL tm;
+private:
 };
 
 RenderContext::RenderContext() {
+
   if (!glfwInit()) {
     fprintf(stderr, "Failed to initialize GLFW\n");
     exit(-1);
@@ -316,7 +366,7 @@ RenderContext::RenderContext() {
 
   // These are the u,v coordinates of each vertex.
   const GLfloat g_textcoords[][2] = {
-      {0.0, 0.0}, {0.0, 1.0}, {1.0, 0.0}, {1.0, 1.0}};
+      {-1.0, -1.0}, {-1.0, 1.0}, {1.0, -1.0}, {1.0, 1.0}};
 
   glGenBuffers(1, &uvbuffer);
   glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
@@ -350,6 +400,7 @@ RenderContext::RenderContext() {
   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   TextureLoc = glGetUniformLocation(programID, "colors");
 
+  ac.init();
 
   initText2D( "Holstein.DDS" );
 
@@ -360,6 +411,7 @@ int RenderContext::render(void) {
   glfwGetCursorPos(window, &pos_x, &pos_y);
 
   tm.Start();
+  ac.reset();
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glUseProgram(programID);
@@ -373,6 +425,7 @@ int RenderContext::render(void) {
   set_uniform2d(programID, "center", cx, cy);
   set_uniform1d(programID, "scale", cur_scale);
 #endif
+
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_1D, TextureID);
   glUniform1i(TextureLoc, 0);
@@ -386,26 +439,31 @@ int RenderContext::render(void) {
   glEnableVertexAttribArray(1);
   glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
   glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+  
+  glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, ac.atomicsBuffer);
 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   tm.Stop();
 
+  auto counters = ac.read();
+
   glDisableVertexAttribArray(0);
   glDisableVertexAttribArray(1);
 
-  static char text[256];
-  printText2D(text, 10, 50, 10);
+  printText2D(hud, 10, 50, 10);
   glfwSwapBuffers(window);
   glfwPollEvents();
 
   float time = tm.Report();
 
-  float mod = glm::clamp(16000.0f / time, .9f, 1.1f);
+  float mod = glm::clamp(16000.0f / time, .66f, 1.5f);
   
   iter = glm::clamp(int(iter * mod), 10, 50000) ;
-  snprintf(text, sizeof(text), "%5.2fms, %7i, %7E, %6f, %6f",
-           time/1000, iter, cur_scale, cx, cy);
+  snprintf(hud, sizeof(hud), "%5.2fms, %7E, %7i, %7E, %6f, %6f",
+           time/1000, double(counters[0]), iter, cur_scale, cx, cy);
+  printf("%s\n", hud);
+
 
   return 0;
 }
@@ -414,8 +472,8 @@ glm::dvec2 RenderContext::get_xy(double x, double y) {
   auto u = (x / screen_width);
   auto v = (1 - y / screen_height);
 
-  auto posx = aspect_ratio * (u - .5) * cur_scale + cx;
-  auto posy = (v - .5) * cur_scale + cy;
+  auto posx = aspect_ratio * (2*u - 1) * cur_scale + cx;
+  auto posy = (2*v - 1) * cur_scale + cy;
 
   // printf("\n %5f %5f %5f %5f %5.3f %5.3f\n", u, v, posx, posy, cx, cy);
 

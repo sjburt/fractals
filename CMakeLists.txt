@@ -10,7 +10,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 add_subdirectory (external)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-   set(CMAKE_CXX_FLAGS "-std=c++11 -Wall")
+   set(CMAKE_CXX_FLAGS "-g -std=c++11 -Wall")
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX)

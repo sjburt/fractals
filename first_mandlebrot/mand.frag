@@ -1,4 +1,4 @@
-#version 400
+#version 430
 
 uniform dvec2 center;
 uniform double scale;
@@ -7,13 +7,15 @@ uniform float aspect;
 
 uniform sampler1D colors;
 
+layout (binding = 0, offset = 0) uniform atomic_uint count_iters;
+
 in vec2 UV;
 out vec4 diffuseColor;
 
 void main() {
     dvec2 c, z;
-	c = dvec2(aspect * (UV.x - 0.5) * scale + center.x,
-                       (UV.y - 0.5) * scale + center.y);
+	c = dvec2(aspect * (UV.x) * scale + center.x,
+                       (UV.y) * scale + center.y);
     z = c;
 	double dist;
 	int i = 0;
@@ -23,8 +25,8 @@ void main() {
         if (dist > 4.0) {
             break;
         }
-        dmat2 A = dmat2(z.x, z.y, -z.y, z.x);
-        z = (A * z) + c;
+        z = dvec2(z.x*z.x - z.y*z.y, 2.0*z.x*z.y ) + c;
+        atomicCounterIncrement(count_iters);
     }
-    diffuseColor = (i==iter) ? vec4(0) : texture(colors, (float(i)/200.0));
+    diffuseColor = (i==iter) ? vec4(0) : texture(colors, .01 * (float(i)));
 }
