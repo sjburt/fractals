@@ -6,12 +6,14 @@ add_executable(first_mandlebrot
     passthrough.vert
     mand.frag
     mand_single.frag
+    mand.cpp
+    mand.hpp
     ../common/text2D.cpp
     ../common/text2D.hpp
     ../common/shader.cpp
     ../common/shader.hpp
     ../common/texture.cpp
-    ../common/texture.hpp   
+    ../common/texture.hpp
 )
 
 target_link_libraries(first_mandlebrot
