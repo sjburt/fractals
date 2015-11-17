@@ -1,6 +1,9 @@
 include_directories(${fractals_SOURCE_DIR}/first_mandlebrot)
 link_directories(${fractals_SOURCE_DIR}/first_mandlebrot)
 
+find_package(Freetype REQUIRED)
+include_directories(${FREETYPE_INCLUDE_DIRS})
+
 add_executable(first_mandlebrot
     main.cpp
     passthrough.vert
@@ -8,6 +11,8 @@ add_executable(first_mandlebrot
     mand_single.frag
     mand.cpp
     mand.hpp
+    text.cpp
+    text.hpp
     ../common/text2D.cpp
     ../common/text2D.hpp
     ../common/shader.cpp
@@ -18,6 +23,7 @@ add_executable(first_mandlebrot
 
 target_link_libraries(first_mandlebrot
     ${ALL_LIBS}
+    ${FREETYPE_LIBRARIES}
 )
 # Xcode and Visual working directories
 set_target_properties(first_mandlebrot PROPERTIES XCODE_ATTRIBUTE_CONFIGURATION_BUILD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/first_mandlebrot/")

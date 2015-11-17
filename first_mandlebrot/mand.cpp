@@ -48,19 +48,19 @@ void Mandlebrot::init(void) {
                GL_STATIC_DRAW);
 
   // Create a 1-d texture to use as a color palette.
-  const GLubyte g_colors[][4] = {{0xff, 0x33, 0, 0},
-                                 {0x33, 0x33, 0xff, 0},
-                                 {0xff, 0x33, 0x33, 0},
-                                 {0x44, 0x88, 0xff, 0},
-                                 {0x44, 0x44, 0xff, 0},
-                                 {0xff, 0x44, 0x44, 0},
-                                 {0x33, 0x88, 0xdd, 0},
-                                 {0x33, 0x55, 0xdd, 0},
-                                 {0xdd, 0x55, 0x33, 0},
-                                 {0x33, 0x88, 0xdd, 0},
-                                 {0x33, 0x33, 0xff, 0},
-                                 {0xdd, 0x44, 0x44, 0},
-                                 {0x33, 0x88, 0xff, 0}};
+  const GLubyte g_colors[][4] = {{0xff, 0x33, 0, 0xff},
+                                 {0x33, 0x33, 0xff, 0xff},
+                                 {0xff, 0x33, 0x33, 0xff},
+                                 {0x44, 0x88, 0xff, 0xff},
+                                 {0x44, 0x44, 0xff, 0xff},
+                                 {0xff, 0x44, 0x44, 0xff},
+                                 {0x33, 0x88, 0xdd, 0xff},
+                                 {0x33, 0x55, 0xdd, 0xff},
+                                 {0xdd, 0x55, 0x33, 0xff},
+                                 {0x33, 0x88, 0xdd, 0xff},
+                                 {0x33, 0x33, 0xff, 0xff},
+                                 {0xdd, 0x44, 0x44, 0xff},
+                                 {0x33, 0x88, 0xff, 0xff}};
 
   glGenTextures(1, &TextureID);
   glBindTexture(GL_TEXTURE_1D, TextureID);
@@ -80,6 +80,8 @@ void Mandlebrot::init(void) {
   u_scale = glGetUniformLocation(programID, "scale");
   u_center = glGetUniformLocationARB(programID, "center");
 
+  glBindBuffer(GL_ARRAY_BUFFER, 0);
+
 
 }
 
@@ -89,10 +91,9 @@ void Mandlebrot::render(const int iter, const float aspect_ratio,
   glUseProgram(programID);
 
 
+
   glUniform1i(u_iter, iter);
   glUniform1f(u_asp, aspect_ratio);
-
-
 
 #if VERSION == 330
   glUniform2f(u_center, float(cx), float(cy));
@@ -108,8 +109,10 @@ void Mandlebrot::render(const int iter, const float aspect_ratio,
 
   glUniformMatrix4fv(MatrixID, 1, GL_FALSE, &Projection[0][0]);
 
+  glBindVertexArray(VertexArrayID);
   glEnableVertexAttribArray(0);
   glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+
   glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
   glEnableVertexAttribArray(1);
@@ -118,7 +121,6 @@ void Mandlebrot::render(const int iter, const float aspect_ratio,
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
   glDisableVertexAttribArray(0);
   glDisableVertexAttribArray(1);
-
 }
 
 Mandlebrot::~Mandlebrot(void) {

@@ -23,6 +23,7 @@
 #include "../common/text2D.hpp"
 
 #include "./mand.hpp"
+#include "./text.hpp"
 
 static void framebuffer_cb(GLFWwindow* window, int width, int height);
 static void wheel_cb(GLFWwindow* window, double xoffset, double yoffset);
@@ -134,6 +135,7 @@ class RenderContext {
   double cur_scale = 1.1;
   glm::dvec2 get_xy(double x, double y);
 
+  TextGL text;
   TimeGL tm;
   AtomicCounter ac;
   Mandlebrot mb;
@@ -149,7 +151,7 @@ class RenderContext {
   void mouseposition(double x, double y);
   int changed = 0;
   ~RenderContext(void);
-private:
+
 };
 
 RenderContext::RenderContext() {
@@ -206,7 +208,8 @@ RenderContext::RenderContext() {
   glfwSwapInterval(1);
   mb.init();
   ac.init();
-  initText2D("Holstein.DDS");
+  // initText2D("Holstein.DDS");
+  text = TextGL("stuff", 20, glm::vec3(1,1,1));
 }
 
 int RenderContext::render(void) {
@@ -214,20 +217,22 @@ int RenderContext::render(void) {
   tm.Start();
   ac.reset();
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
   glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, ac.atomicsBuffer);
   mb.render(iter, aspect_ratio, cx, cy, cur_scale);
-  auto counters = ac.read();
-  printText2D(hud, 10, 50, 10);
-
+  // printText2D(hud, 10, 50, 10);
+  text.print(window, hud, 20, 20);
   tm.Stop();
+  auto counters = ac.read();
+  // int counters[] = {0};
   float time = tm.Report();
 
   glfwSwapBuffers(window);
   glfwPollEvents();
 
-  float mod = glm::clamp(32000.0f / time, .66f, 1.5f);
-  iter = glm::clamp(int(iter * mod), 10, 50000) ;
-  snprintf(hud, sizeof(hud), "%5.2fms, %7E, %7i, %7E, %6f, %6f",
+  float mod = glm::clamp(16000.0f / time, .66f, 1.5f);
+  iter = glm::clamp(int(iter * mod), 10, 500000) ;
+  snprintf(hud, sizeof(hud), "%5.2fms, %7E, %7i, %7E, %6f, %6f \n",
            time/1000, double(counters[0]), iter, cur_scale, cx, cy);
   // printf("%s\n", hud);
 
