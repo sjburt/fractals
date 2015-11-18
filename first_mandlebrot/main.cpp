@@ -171,7 +171,7 @@ RenderContext::RenderContext() {
   screen_height = 768;
   aspect_ratio = float(screen_width) / float(screen_height);
   // Open a window and create its OpenGL context
-  window = glfwCreateWindow(screen_width, screen_height, "messin around", NULL,
+  window = glfwCreateWindow(screen_width, screen_height, "mandlebroh", NULL,
                             NULL);
 
   if (window == NULL) {
@@ -209,7 +209,7 @@ RenderContext::RenderContext() {
   mb.init();
   ac.init();
   // initText2D("Holstein.DDS");
-  text = TextGL("stuff", 20, glm::vec3(1,1,1));
+  text = TextGL("stuff", 20, glm::vec3(.75, .75, 1));
 }
 
 int RenderContext::render(void) {
@@ -219,20 +219,21 @@ int RenderContext::render(void) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, ac.atomicsBuffer);
+
   mb.render(iter, aspect_ratio, cx, cy, cur_scale);
-  // printText2D(hud, 10, 50, 10);
-  text.print(window, hud, 20, 20);
+  text.print(window, hud, 10, 50);
+
   tm.Stop();
   auto counters = ac.read();
-  // int counters[] = {0};
+
   float time = tm.Report();
 
   glfwSwapBuffers(window);
   glfwPollEvents();
 
-  float mod = glm::clamp(16000.0f / time, .66f, 1.5f);
-  iter = glm::clamp(int(iter * mod), 10, 500000) ;
-  snprintf(hud, sizeof(hud), "%5.2fms, %7E, %7i, %7E, %6f, %6f \n",
+  float mod = glm::clamp(16000.0f / time, .1f, 2.0f);
+  iter = glm::clamp(int(iter * mod), 10, 50000) ;
+  snprintf(hud, sizeof(hud), "%5.2fms, %5E, %5i,\n%5.3E, %6f, %6f \n",
            time/1000, double(counters[0]), iter, cur_scale, cx, cy);
   // printf("%s\n", hud);
 

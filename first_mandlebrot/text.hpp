@@ -28,6 +28,7 @@ private:
   GLuint textProg;
   GLuint VAO, VBO;
   glm::vec3 color;
+  short line_height;
 };
 
 #endif

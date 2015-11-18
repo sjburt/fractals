@@ -70,17 +70,10 @@ TextGL::TextGL(const char * fontname, int size, glm::vec3 color) {
         .Advance = GLuint(face->glyph->advance.x)
     };
     Characters.insert(std::pair<GLchar, Character>(c, character));
-    std::cout << c;
-    std::cout << "\n";
-    // printf("%i %i %i \n", face->glyph->bitmap.rows, face->glyph->bitmap.width, sizeof(face->glyph->bitmap.buffer) );
-    // for(int i = 0; i < face->glyph->bitmap.rows; i++) {
-    //   for (int j = 0; j < face->glyph->bitmap.width; j++) {
-    //     printf("%3x ", face->glyph->bitmap.buffer[i* face->glyph->bitmap.width + j]);
-    //   }
-    //   printf("\n");
-    // }
-    // printf("\n\n\n");
   }
+
+  line_height = face->max_advance_height / 64;
+
   glBindTexture(GL_TEXTURE_2D, 0);
 
   FT_Done_Face(face);
@@ -92,6 +85,7 @@ TextGL::TextGL(const char * fontname, int size, glm::vec3 color) {
 }
 
 void TextGL::print(GLFWwindow * window, std::string text, int x, int y) {
+  auto x_start = x;  // auto y_start = y;
   if (!initOK) {std::cout << "error\n" ; return;}
 
   glUseProgram(textProg);
@@ -111,7 +105,7 @@ void TextGL::print(GLFWwindow * window, std::string text, int x, int y) {
   glBindVertexArray(VAO);
 
   float scale = 1;
-  auto textColor = glGetUniformLocation(textProg, "textcolor");
+  auto textColor = glGetUniformLocation(textProg, "textColor");
   glUniform3f(textColor, color.x, color.y, color.z);
 
   int scr_w, scr_h;
@@ -125,6 +119,13 @@ void TextGL::print(GLFWwindow * window, std::string text, int x, int y) {
   std::string::const_iterator c;
 
   for (c = text.begin(); c!= text.end(); ++c) {
+    if (*c == '\r') {
+      x = x_start;
+    }
+    if (*c == '\n') {
+      x = x_start;
+      y -= line_height;
+    }
     if (*c < 32) continue;
     Character ch = Characters[*c];
 
