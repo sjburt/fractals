@@ -22,9 +22,9 @@ TextGL::TextGL(const char * fontname, int size, glm::vec3 color) {
   FT_Face face;
   std::cout << "setting stuff up!\n";
   if (FT_Init_FreeType(&ft))
-    std::cout << "ERROR: could not init freetype" << std::endl;
+    std::cout << "ERROR: could not init freetype\n";
   if (FT_New_Face(ft, "/usr/share/fonts/truetype/droid/DroidSansMono.ttf", 0, &face))
-    std::cout << "Error: could not init face" << std::endl;
+    std::cout << "Error: could not init face\n";
   FT_Set_Pixel_Sizes(face, 0, size);
 
   textProg = LoadShaders("./text.vert", "./text.frag");
@@ -33,12 +33,10 @@ TextGL::TextGL(const char * fontname, int size, glm::vec3 color) {
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // Disable byte-alignment restriction
 
-  for (GLubyte c = 0; c < 128; c++)
-  {
+  for (GLubyte c = 0; c < 128; c++) {
     // Load character glyph
-    if (FT_Load_Char(face, c, FT_LOAD_RENDER))
-    {
-        std::cout << "ERROR::FREETYTPE: Failed to load Glyph" << std::endl;
+    if (FT_Load_Char(face, c, FT_LOAD_RENDER)) {
+        std::cout << "ERROR::FREETYTPE: Failed to load Glyph\n";
         continue;
     }
     // Generate texture
@@ -79,12 +77,11 @@ TextGL::TextGL(const char * fontname, int size, glm::vec3 color) {
   FT_Done_Face(face);
   FT_Done_FreeType(ft);
 
-
   this->color = color;
   this->initOK = true;
 }
 
-void TextGL::print(GLFWwindow * window, std::string text, int x, int y) {
+void TextGL::print(std::string text, int x, int y, int screen_width, int screen_height) {
   auto x_start = x;  // auto y_start = y;
   if (!initOK) {std::cout << "error\n" ; return;}
 
@@ -108,10 +105,7 @@ void TextGL::print(GLFWwindow * window, std::string text, int x, int y) {
   auto textColor = glGetUniformLocation(textProg, "textColor");
   glUniform3f(textColor, color.x, color.y, color.z);
 
-  int scr_w, scr_h;
-
-  glfwGetFramebufferSize(window, &scr_w, &scr_h);
-  glm::mat4 projection = glm::ortho(0.0f, float(scr_w), 0.0f, float(scr_h));
+  glm::mat4 projection = glm::ortho(0.0f, float(screen_width), 0.0f, float(screen_height));
 
   auto projMatrix = glGetUniformLocation(textProg, "projection");
   glUniformMatrix4fv(projMatrix, 1, GL_FALSE, &projection[0][0]);
@@ -158,9 +152,8 @@ void TextGL::print(GLFWwindow * window, std::string text, int x, int y) {
     x += (ch.Advance >> 6) * scale; // Bitshift by 6 to get value in pixels (2^6 = 64)
     // std::cout << *c;
     glDisable(GL_BLEND);
-}
-// glDisableVertexAttribArray(0);
-glBindVertexArray(0);
-glBindTexture(GL_TEXTURE_2D, 0);
-
+  }
+  // glDisableVertexAttribArray(0);
+  glBindVertexArray(0);
+  glBindTexture(GL_TEXTURE_2D, 0);
 }

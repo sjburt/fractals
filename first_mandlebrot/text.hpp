@@ -15,7 +15,7 @@ class TextGL {
 public:
   TextGL(const char * fontname, int size, glm::vec3 color);
   TextGL(void);
-  void print(GLFWwindow* window, std::string text, int x, int y);
+  void print(std::string text, int x, int y, int screen_width, int screen_height);
 private:
   struct Character {
     GLuint     TextureID;  // ID handle of the glyph texture

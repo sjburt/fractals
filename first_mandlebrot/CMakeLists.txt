@@ -21,6 +21,10 @@ add_executable(first_mandlebrot
     ../common/texture.hpp
 )
 
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+   set(CMAKE_CXX_LINK_FLAGS "-lprofiler")
+endif()
+
 target_link_libraries(first_mandlebrot
     ${ALL_LIBS}
     ${FREETYPE_LIBRARIES}

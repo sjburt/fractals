@@ -1,7 +1,7 @@
 // Include standard headers
-#include <stdio.h>
-#include <stdlib.h>
-
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <string>
 #include <vector>
 #include <iostream>
@@ -66,12 +66,13 @@ void TimeGL::Start(void) {
 
 void TimeGL::Stop(void) {
   glEndQuery(GL_TIME_ELAPSED);
+}
+
+float TimeGL::Report(void) {
   GLuint result;
   glGetQueryObjectuiv(query[0], GL_QUERY_RESULT, &result);
   fResult = result * 0.001;
-}
-
-float TimeGL::Report(void) { return fResult; }
+  return fResult; }
 
 class AtomicCounter {
  public:
@@ -80,6 +81,7 @@ class AtomicCounter {
   void reset(void);
   glm::uvec3 read(void);
   GLuint atomicsBuffer;
+  GLuint atomicsReadBuffer;
 };
 
 void AtomicCounter::init(void) {
@@ -90,11 +92,17 @@ void AtomicCounter::init(void) {
   glBufferData(GL_ATOMIC_COUNTER_BUFFER, sizeof(GLuint) * 3, NULL,
                GL_DYNAMIC_DRAW);
   // unbind the buffer
-  // glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+  glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
+
+  glGenBuffers(1, &atomicsReadBuffer);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, atomicsReadBuffer);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(GLuint) * 3, NULL,
+               GL_DYNAMIC_DRAW);
+
 }
 
 void AtomicCounter::reset(void){
-  // glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomicsBuffer);
+  glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomicsBuffer);
   GLuint a[3] = {0,0,0};
   glBufferSubData(GL_ATOMIC_COUNTER_BUFFER, 0 , sizeof(GLuint) * 3, a);
   // glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, 0);
@@ -102,21 +110,19 @@ void AtomicCounter::reset(void){
 }
 
 glm::uvec3 AtomicCounter::read(void) {
-  GLuint *userCounters;
-
+  // GLuint *userCounters;
+  glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, atomicsBuffer);
+  GLuint userCounters[3];
   glBindBuffer(GL_ATOMIC_COUNTER_BUFFER, atomicsBuffer);
-  // again we map the buffer to userCounters, but this time for read-only access
-  userCounters = (GLuint*)glMapBufferRange(GL_ATOMIC_COUNTER_BUFFER,
-                                         0,
-                                         sizeof(GLuint) * 3,
-                                         GL_MAP_READ_BIT
-                                        );
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, atomicsReadBuffer);
 
-  // copy the values to other variables because...
+  glCopyBufferSubData(GL_ATOMIC_COUNTER_BUFFER, GL_SHADER_STORAGE_BUFFER,
+    0,0,12);
+
+  glGetBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, 12, userCounters);
 
   glm::uvec3 ret = glm::uvec3(userCounters[0], userCounters[1], userCounters[2]);
-  // ... as soon as we unmap the buffer
-  // the pointer userCounters becomes invalid.
+  glUnmapBuffer(GL_SHADER_STORAGE_BUFFER);
   glUnmapBuffer(GL_ATOMIC_COUNTER_BUFFER);
   return ret;
 }
@@ -155,7 +161,6 @@ class RenderContext {
 };
 
 RenderContext::RenderContext() {
-
   if (!glfwInit()) {
     fprintf(stderr, "Failed to initialize GLFW\n");
     exit(-1);
@@ -208,31 +213,30 @@ RenderContext::RenderContext() {
   glfwSwapInterval(1);
   mb.init();
   ac.init();
-  // initText2D("Holstein.DDS");
   text = TextGL("stuff", 20, glm::vec3(.75, .75, 1));
 }
 
 int RenderContext::render(void) {
-  glfwGetCursorPos(window, &pos_x, &pos_y);
+
   tm.Start();
+  glm::uvec3 counters = glm::uvec3(0);
   ac.reset();
+  glfwGetCursorPos(window, &pos_x, &pos_y);
+
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-  glBindBufferBase(GL_ATOMIC_COUNTER_BUFFER, 0, ac.atomicsBuffer);
-
   mb.render(iter, aspect_ratio, cx, cy, cur_scale);
-  text.print(window, hud, 10, 50);
+  text.print(hud, 10, 50, screen_width, screen_height);
+
+  counters = ac.read();
 
   tm.Stop();
-  auto counters = ac.read();
-
   float time = tm.Report();
-
   glfwSwapBuffers(window);
   glfwPollEvents();
 
   float mod = glm::clamp(16000.0f / time, .1f, 2.0f);
   iter = glm::clamp(int(iter * mod), 10, 50000) ;
+  // iter = 100;
   snprintf(hud, sizeof(hud), "%5.2fms, %5E, %5i,\n%5.3E, %6f, %6f \n",
            time/1000, double(counters[0]), iter, cur_scale, cx, cy);
   // printf("%s\n", hud);
@@ -295,7 +299,6 @@ void RenderContext::mouseposition(double x, double y) {
 }
 
 RenderContext::~RenderContext(void) {
-  cleanupText2D();
 }
 
 RenderContext context;
