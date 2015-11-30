@@ -6,7 +6,7 @@ find_package(OpenGL REQUIRED)
 set(CMAKE_CXX_FLAGS "-g -Wall")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Compile external dependencies 
+# Compile external dependencies
 add_subdirectory (external)
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -40,3 +40,6 @@ add_definitions(
 
 # First mandlebrot set. As naive as possible.
 add_subdirectory(first_mandlebrot)
+
+# second mandlebrot set. shader pipeline.
+add_subdirectory(second_mandlebrot)
