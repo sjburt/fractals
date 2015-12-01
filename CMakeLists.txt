@@ -14,7 +14,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 if(CMAKE_COMPILER_IS_GNUCXX)
-   set(CMAKE_CXX_FLAGS "-std=c++11 -Wall")
+   set(CMAKE_CXX_FLAGS "-ggdb -pg -Q -std=c++11 -Wall")
 endif()
 
 include_directories(

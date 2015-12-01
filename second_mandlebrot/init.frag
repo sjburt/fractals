@@ -8,9 +8,8 @@ in vec2 UV;
 out vec2 coords;
 
 void main() {
-    vec2 c;
-    c = vec2(aspect * (UV.x) * scale + center.x,
-                       (UV.y) * scale + center.y);
+    vec2 cc = vec2(aspect * (2*UV.x-1) * scale + center.x,
+                            (2*UV.y-1) * scale + center.y);
 
-    coords = vec2(c.x, c.y);
+    coords = vec2(cc.x, cc.y);
 }

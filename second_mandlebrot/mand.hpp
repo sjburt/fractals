@@ -21,31 +21,26 @@ class Mandlebrot {
   GLuint kern_prog;
   GLuint show_prog;
 
-  GLuint vertexbuffer;
-  GLuint uvbuffer;
-
-  GLuint zbuffer;
-
   GLuint TextureLoc;
   GLuint TextureID;
-  GLuint MatrixID, iterID;
-
-  GLuint u_iter, u_asp, u_center, u_scale;
 
   glm::mat4 Projection;
   const GLfloat g_vertex_buffer_data[4][4] = {
       {-1, -1, 0, 1}, {-1, 1, 0, 1}, {1, -1, 0, 1}, {1, 1, 0, 1}};
 
   GLfloat g_textcoords[4][2] = {
-      {-1.0, -1.0}, {-1.0, 1.0}, {1.0, -1.0}, {1.0, 1.0}};
+      {0, 0}, {0, 1.0}, {1.0, 0}, {1.0, 1.0}};
 
 
 
  public:
   Mandlebrot(void);
   void init(void);
-  void render(const int iter, const float aspect_ratio, const double cx,
-              const double cy, const double scale);
+  void render(const int iter);
+  void reinit(int width, int height, const float aspect_ratio, const double cx,
+              const double cy, const double cur_scale);
+  void setActiveFramebuffer(std::string buffer);
+  void setActiveFramebuffer(int buffer);
   ~Mandlebrot(void);
 };
 

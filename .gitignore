@@ -237,3 +237,5 @@ $RECYCLE.BIN/
 *.lnk
 ../CMakeCache.txt
 CMakeCache.txt
+*.png
+vogl*.bin
