@@ -8,6 +8,20 @@
 
 //  #define VERSION 330
 
+
+
+void print_handles(std::map<std::string, GLuint> handles) {
+  std::cout << "HANDLES: \n";
+  std::map<std::string, GLuint>::iterator it;
+  for (it = handles.begin(); it != handles.end(); it++) {
+    std::cout << it->first  // string (key)
+          << ':'
+          << it->second   // string's value
+          << std::endl ;
+  }
+}
+
+
 Mandlebrot::Mandlebrot(void) {
 
 }
@@ -15,13 +29,16 @@ Mandlebrot::Mandlebrot(void) {
 void Mandlebrot::init(void) {
 
 // Create and compile our GLSL program from the shaders
-  init_prog = LoadShaders("passthrough.vert", "init.frag");
+  init_prog = LoadShaders("/home/steve/fractals/fractals/second_mandlebrot/passthrough.vert",
+   "/home/steve/fractals/fractals/second_mandlebrot/init.frag");
   if (!init_prog) exit(-1);
 
-  kern_prog = LoadShaders("passthrough.vert", "mand_kern.frag");
+  kern_prog = LoadShaders("/home/steve/fractals/fractals/second_mandlebrot/passthrough.vert",
+   "/home/steve/fractals/fractals/second_mandlebrot/mand_kern.frag");
   if (!kern_prog) exit(-1);
 
-  show_prog = LoadShaders("passthrough.vert", "mand_show.frag");
+  show_prog = LoadShaders("/home/steve/fractals/fractals/second_mandlebrot/passthrough.vert",
+   "/home/steve/fractals/fractals/second_mandlebrot/mand_show.frag");
   if (!show_prog) exit(-1);
 
 
@@ -45,8 +62,8 @@ void Mandlebrot::init(void) {
 
   glBindVertexArray(0);
 
-  glDeleteBuffers(1, &handles["kern_VBO"]);
-  glDeleteBuffers(1, &handles["kern_uv_VBO"]);
+  // glDeleteBuffers(1, &handles["init_VBO"]);
+  // glDeleteBuffers(1, &handles["init_uv_VBO"]);
 
 
   glGenVertexArrays(1, &handles["kern_VAO"]);
@@ -68,11 +85,8 @@ void Mandlebrot::init(void) {
 
   glBindVertexArray(0);
 
-  glDeleteBuffers(1, &handles["kern_VBO"]);
-  glDeleteBuffers(1, &handles["kern_uv_VBO"]);
-
-
-
+  // glDeleteBuffers(1, &handles["kern_VBO"]);
+  // glDeleteBuffers(1, &handles["kern_uv_VBO"]);
 
   // Create a 1-d texture to use as a color palette.
   const GLubyte g_colors[][4] = {{0xff, 0x33, 0, 0xff},
@@ -100,17 +114,15 @@ void Mandlebrot::init(void) {
   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
-
-
-  TextureLoc = glGetUniformLocation(kern_prog, "colors");
-
-  handles["coordinate"] = glGetUniformLocation(kern_prog, "location");
-
-  handles["iter"] = glGetUniformLocationARB(kern_prog, "iter");
   handles["aspect_ratio"] = glGetUniformLocationARB(init_prog, "aspect");
-
   handles["scale"] = glGetUniformLocation(init_prog, "scale");
   handles["center"] = glGetUniformLocationARB(init_prog, "center");
+
+  handles["in_c_loc"] = glGetUniformLocation(kern_prog, "in_c");
+  handles["in_z_loc"] = glGetUniformLocation(kern_prog, "in_z");
+
+  handles["colors_loc"] = glGetUniformLocation(show_prog, "colors");
+  handles["iter"] = glGetUniformLocationARB(show_prog, "iter");
 
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
@@ -131,19 +143,50 @@ void Mandlebrot::init(void) {
   glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
     handles["tex_init"], 0);
 
-  // Set the list of draw buffers.
-  GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-  glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
 
   // Always check that our framebuffer is ok
   if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
     std::cout << "framebuffer was not properly initialized. \n";
     exit(1);
   }
+  // Set the list of draw buffers.
+
+
+  glGenFramebuffers(1, &handles["fbo_kern"]);
+  glBindFramebuffer(GL_FRAMEBUFFER, handles["fbo_kern"]);
+
+  glGenTextures(1, &handles["tex_kern1"]);
+  glBindTexture(GL_TEXTURE_2D, handles["tex_kern1"]);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 1024, 768, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+  glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,
+    handles["tex_kern1"], 0);
+
+  glGenTextures(1, &handles["tex_kern2"]);
+  glBindTexture(GL_TEXTURE_2D, handles["tex_kern2"]);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 1024, 768, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+  glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2,
+    handles["tex_kern2"], 0);
+
+
+
+  // Set the list of draw buffers.
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
+  print_handles(handles);
 }
+
 
 void Mandlebrot::setActiveFramebuffer(std::string buffer) {
   glBindFramebuffer(GL_FRAMEBUFFER, handles[buffer]);
@@ -186,25 +229,39 @@ void Mandlebrot::reinit(int width, int height, const float aspect_ratio,
 
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
+  glBindTexture(GL_TEXTURE_2D, handles["tex_kern1"]);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+  glBindTexture(GL_TEXTURE_2D, handles["tex_kern2"]);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, handles["fbo_kern"]);
+  GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT1};
+  glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+
+  glBindVertexArray(handles["init_VAO"]);
+
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+  glBindFramebuffer(GL_FRAMEBUFFER, handles["fbo_kern"]);
+  DrawBuffers[0] = GL_COLOR_ATTACHMENT2;
+  glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+  glBindVertexArray(handles["init_VAO"]);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
 }
 
 
 void Mandlebrot::render(const int iter) {
-
-
-  // render to the screen.
-  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-  GLenum DrawBuffers[1] = {GL_BACK_LEFT};
-  glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
-
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glBindFramebuffer(GL_FRAMEBUFFER, handles["fbo_kern"]);
 
   glUseProgram(kern_prog);
-  glUniform1i(handles["iter"], iter);
 
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, handles["tex_init"]);
+  glUniform1i(handles["in_c_loc"], handles["tex_init"]);
   // glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, width, height, 0, GL_RG, GL_UNSIGNED_BYTE, 0);
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -212,15 +269,39 @@ void Mandlebrot::render(const int iter) {
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-
-  glUniform1i(handles["coordinate"], 0);
-  glActiveTexture(GL_TEXTURE1);
-  glBindTexture(GL_TEXTURE_1D, TextureID);
-  glUniform1i(TextureLoc, 1);
+  // glUniform1i(handles["colors_loc"], TextureID);
 
   glBindVertexArray(handles["kern_VAO"]);
 
-  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+  GLenum DrawBuffers[1];
+  for (int i = 0;  i < 10; i ++) {
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, handles["tex_init"]);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, handles["fbo_kern"]);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, handles["tex_kern1"]);
+    glUniform1i(handles["in_c_loc"], handles["tex_init"]);
+    glUniform1i(handles["in_z_loc"], handles["tex_kern1"]);
+
+    DrawBuffers[0] = GL_COLOR_ATTACHMENT2;
+    glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+
+    glBindFramebuffer(GL_FRAMEBUFFER, handles["fbo_kern"]);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, handles["tex_kern2"]);
+    glUniform1i(handles["in_c_loc"], handles["tex_init"]);
+    glUniform1i(handles["in_z_loc"], handles["tex_kern2"]);
+
+    DrawBuffers[0] = GL_COLOR_ATTACHMENT1;
+    glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+  }
+
   glBindVertexArray(0);
 
 
@@ -233,6 +314,6 @@ Mandlebrot::~Mandlebrot(void) {
   glDeleteProgram(init_prog);
   glDeleteProgram(show_prog);
   glDeleteProgram(kern_prog);
-  glDeleteTextures(1, &TextureLoc);
+  glDeleteTextures(1, &handles["colors_loc"]);
   glDeleteVertexArrays(1, &handles["init_VAO"]);
 }

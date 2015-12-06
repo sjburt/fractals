@@ -297,8 +297,8 @@ RenderContext::RenderContext() {
 
   glfwSwapInterval(1);
   mb.init();
-  ac.init();
-  text = TextGL("stuff", 20, glm::vec3(.75, .75, 1));
+  // ac.init();
+  // text = TextGL("stuff", 20, glm::vec3(.75, .75, 1));
 
   mb.reinit(screen_width, screen_height, aspect_ratio, cx, cy, cur_scale);
 
@@ -306,18 +306,18 @@ RenderContext::RenderContext() {
 
 int RenderContext::render(void) {
 
-  tm.Start();
-  ac.reset();
+  // tm.Start();
+  // ac.reset();
   glfwGetCursorPos(window, &pos_x, &pos_y);
 
   // mb.reinit(screen_width, screen_height, aspect_ratio, cx, cy, cur_scale);
   mb.render(iter);
   // text.print(hud, 10, 50, screen_width, screen_height);
 
-  // float counters[] = {0};
-  auto counters = ac.read();
+  float counters[] = {0};
+  // auto counters = ac.read();
 
-  tm.Stop();
+  // tm.Stop();
   float time = tm.Report();
 
   int x = glm::clamp(int(pos_x), 0, screen_width);
@@ -327,20 +327,20 @@ int RenderContext::render(void) {
   GLfloat* pixels2 = new GLfloat[2];
   glReadPixels(x, screen_height-y, 1, 1, GL_RG, GL_FLOAT, pixels2);
 
-  mb.setActiveFramebuffer(0);
+  mb.setActiveFramebuffer("fbo_kern");
   GLfloat* pixels = new GLfloat[4];
   glReadPixels(x, screen_height-y, 1, 1, GL_RGBA, GL_FLOAT, pixels);
 
   glfwSwapBuffers(window);
   glfwPollEvents();
 
-  // auto p = get_xy(x, y);
-  // printf("I> x: %5i/%6.3f y: %5i/%6.3f (%6.3f,%6.3f) ", x, p.x, y, p.y,
-  //   pixels2[0], pixels2[1]);
-  // std::cout << std::endl;
-  // printf("K> x: %5i/%6.3f y: %5i/%6.3f (%6.3f,%6.3f,%6.3f,%6.3f) ", x, p.x, y, p.y,
-  //   pixels[0], pixels[1],pixels[2],pixels[3]);
-  // std::cout << std::endl;
+  auto p = get_xy(x, y);
+  printf("I> x: %5i/%6.3f y: %5i/%6.3f (%6.3e,%6.3e) ", x, p.x, y, p.y,
+    pixels2[0], pixels2[1]);
+  std::cout << std::endl;
+  printf("K> x: %5i/%6.3f y: %5i/%6.3f (%6.3e,%6.3e,%6.3e,%6.3e) ", x, p.x, y, p.y,
+    pixels[0], pixels[1],pixels[2],pixels[3]);
+  std::cout << std::endl;
 
   float mod = glm::clamp(16000.0f / time, .1f, 2.0f);
   iter = glm::clamp(int(iter * mod), 10, 50000) ;
@@ -432,21 +432,21 @@ static void mouse_button_callback(GLFWwindow* window, int button, int action,
 }
 
 int main(void) {
-  // for (int i = 0; i < 10; i++) {
-  //   context.render();
-  // }
+  for (int i = 0; i < 10; i++) {
+    context.render();
+  }
   // getchar();
 
 
 
 
 
-  do {
-    context.render();
-    frameno++;
-  }  // Check if the ESC key was pressed or the window was closed
-  while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
-         glfwWindowShouldClose(window) == 0);
+  // do {
+  //   context.render();
+  //   frameno++;
+  // }  // Check if the ESC key was pressed or the window was closed
+  // while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS &&
+  //        glfwWindowShouldClose(window) == 0);
 
 
   // Close OpenGL window and terminate GLFW
