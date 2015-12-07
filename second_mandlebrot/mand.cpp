@@ -13,7 +13,7 @@
 void print_handles(std::map<std::string, GLuint> handles) {
   std::cout << "HANDLES: \n";
   std::map<std::string, GLuint>::iterator it;
-  for (it = handles.begin(); it != handles.end(); it++) {
+  for (it = handles.begin(); it != handles.end(); ++it) {
     std::cout << it->first  // string (key)
           << ':'
           << it->second   // string's value
@@ -103,8 +103,8 @@ void Mandlebrot::init(void) {
                                  {0xdd, 0x44, 0x44, 0xff},
                                  {0x33, 0x88, 0xff, 0xff}};
 
-  glGenTextures(1, &TextureID);
-  glBindTexture(GL_TEXTURE_1D, TextureID);
+  glGenTextures(1, &handles["colors"]);
+  glBindTexture(GL_TEXTURE_1D, handles["colors"]);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
   glTexImage1D(GL_TEXTURE_1D, 0, GL_RGBA, 12, 0, GL_RGBA, GL_UNSIGNED_BYTE,
@@ -122,8 +122,8 @@ void Mandlebrot::init(void) {
   handles["in_z_loc"] = glGetUniformLocation(kern_prog, "in_z");
 
   handles["colors_loc"] = glGetUniformLocation(show_prog, "colors");
-  handles["iter"] = glGetUniformLocationARB(show_prog, "iter");
-
+  handles["iter_loc"] = glGetUniformLocationARB(show_prog, "iter");
+  handles["loc_loc"] = glGetUniformLocation(show_prog, "location");
   glBindBuffer(GL_ARRAY_BUFFER, 0);
 
   // generate a framebuffer to render to
@@ -179,10 +179,6 @@ void Mandlebrot::init(void) {
   glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2,
     handles["tex_kern2"], 0);
 
-
-
-  // Set the list of draw buffers.
-
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   print_handles(handles);
 }
@@ -199,8 +195,6 @@ void Mandlebrot::setActiveFramebuffer(int buffer) {
 void Mandlebrot::reinit(int width, int height, const float aspect_ratio,
                         const double cx, const double cy,
                         const double cur_scale) {
-  // GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-  // glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -237,9 +231,7 @@ void Mandlebrot::reinit(int width, int height, const float aspect_ratio,
   glBindFramebuffer(GL_FRAMEBUFFER, handles["fbo_kern"]);
   GLenum DrawBuffers[1] = {GL_COLOR_ATTACHMENT1};
   glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
-
   glBindVertexArray(handles["init_VAO"]);
-
   glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   glBindFramebuffer(GL_FRAMEBUFFER, handles["fbo_kern"]);
@@ -262,45 +254,64 @@ void Mandlebrot::render(const int iter) {
   glActiveTexture(GL_TEXTURE0);
   glBindTexture(GL_TEXTURE_2D, handles["tex_init"]);
   glUniform1i(handles["in_c_loc"], handles["tex_init"]);
-  // glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, width, height, 0, GL_RG, GL_UNSIGNED_BYTE, 0);
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
-  // glUniform1i(handles["colors_loc"], TextureID);
-
-  glBindVertexArray(handles["kern_VAO"]);
 
   GLenum DrawBuffers[1];
-  for (int i = 0;  i < 10; i ++) {
-
+  for (int i = 0;  i < iter; i++) {
+    glBindFramebuffer(GL_FRAMEBUFFER, handles["fbo_kern"]);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, handles["tex_init"]);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, handles["fbo_kern"]);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, handles["tex_kern1"]);
-    glUniform1i(handles["in_c_loc"], handles["tex_init"]);
-    glUniform1i(handles["in_z_loc"], handles["tex_kern1"]);
+    glUniform1i(handles["in_c_loc"], 0);
+    glUniform1i(handles["in_z_loc"], 1);
 
     DrawBuffers[0] = GL_COLOR_ATTACHMENT2;
     glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+    glBindVertexArray(handles["kern_VAO"]);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
 
     glBindFramebuffer(GL_FRAMEBUFFER, handles["fbo_kern"]);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, handles["tex_init"]);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, handles["tex_kern2"]);
-    glUniform1i(handles["in_c_loc"], handles["tex_init"]);
-    glUniform1i(handles["in_z_loc"], handles["tex_kern2"]);
 
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    glUniform1i(handles["in_c_loc"], 0);
+    glUniform1i(handles["in_z_loc"], 1);
     DrawBuffers[0] = GL_COLOR_ATTACHMENT1;
     glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
+    glBindVertexArray(handles["kern_VAO"]);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
   }
+
+  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+  DrawBuffers[0] = GL_LEFT;
+
+  glUseProgram(show_prog);
+  glActiveTexture(GL_TEXTURE0);
+  glBindTexture(GL_TEXTURE_1D, handles["colors"]);
+  glUniform1i(handles["colors_loc"], 0);
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glBindTexture(GL_TEXTURE_2D, handles["tex_kern1"]);
+  glUniform1i(handles["loc_loc"], 0);
+
+  glBindVertexArray(handles["kern_VAO"]);
+  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
   glBindVertexArray(0);
 

@@ -13,17 +13,14 @@ void main() {
     float dist;
 
     vec2 c = texture(in_c, UV).xy;
-    // vec2 c = UV;
     vec2 z = texture(in_z, UV).xy;
     float i = texture(in_z, UV).z;
-    z = z + c;
-    // dist = dot(z,z);
-    // if (dist < 4.0) {
-    //     z = vec2(z.x*z.x - z.y*z.y, 2.0*z.x*z.y ) + c;
-    //     i++;
-    //     atomicCounterIncrement(count_iters);
-    // }
-    // z.x = z.x
-    // z.y = z.y * z.y;
-    diffuseColor = vec4(z.x, z.y, c.x, UV.x);
+    dist = dot(z,z);
+    if (dist < 4.0) {
+        z = vec2(z.x*z.x - z.y*z.y, 2.0*z.x*z.y ) + c;
+        i++;
+        atomicCounterIncrement(count_iters);
+    }
+
+    diffuseColor = vec4(z.x, z.y, i, dist);
 }
