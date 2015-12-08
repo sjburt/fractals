@@ -1,7 +1,7 @@
-#version 400
+#version 330
 
-uniform dvec2 center;
-uniform double scale;
+uniform vec2 center;
+uniform float scale;
 uniform float aspect;
 
 in vec2 UV;

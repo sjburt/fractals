@@ -1,4 +1,4 @@
-#version 430
+#version 330
 
 // Input vertex data, different for all executions of this shader.
 layout(location = 0) in vec4 v_m;

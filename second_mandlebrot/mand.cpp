@@ -120,6 +120,7 @@ void Mandlebrot::init(void) {
 
   handles["in_c_loc"] = glGetUniformLocation(kern_prog, "in_c");
   handles["in_z_loc"] = glGetUniformLocation(kern_prog, "in_z");
+  handles["iters2do_loc"] = glGetUniformLocation(kern_prog, "iters_to_do");
 
   handles["colors_loc"] = glGetUniformLocation(show_prog, "colors");
   handles["iter_loc"] = glGetUniformLocationARB(show_prog, "iter");
@@ -216,8 +217,8 @@ void Mandlebrot::reinit(int width, int height, const float aspect_ratio,
   }
 
   glUniform1f(handles["aspect_ratio"], aspect_ratio);
-  glUniform2d(handles["center"], cx, cy);
-  glUniform1d(handles["scale"], cur_scale);
+  glUniform2f(handles["center"], cx, cy);
+  glUniform1f(handles["scale"], cur_scale);
 
   glBindVertexArray(handles["init_VAO"]);
 
@@ -262,7 +263,9 @@ void Mandlebrot::render(const int iter) {
 
 
   GLenum DrawBuffers[1];
-  for (int i = 0;  i < iter; i++) {
+  // for (int i = 0;  i < iter; i++) {
+
+
     glBindFramebuffer(GL_FRAMEBUFFER, handles["fbo_kern"]);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, handles["tex_init"]);
@@ -270,6 +273,7 @@ void Mandlebrot::render(const int iter) {
     glBindTexture(GL_TEXTURE_2D, handles["tex_kern1"]);
     glUniform1i(handles["in_c_loc"], 0);
     glUniform1i(handles["in_z_loc"], 1);
+    glUniform1i(handles["iters2do_loc"], iter);
 
     DrawBuffers[0] = GL_COLOR_ATTACHMENT2;
     glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
@@ -289,11 +293,14 @@ void Mandlebrot::render(const int iter) {
 
     glUniform1i(handles["in_c_loc"], 0);
     glUniform1i(handles["in_z_loc"], 1);
+    glUniform1i(handles["iters2do_loc"], iter);
     DrawBuffers[0] = GL_COLOR_ATTACHMENT1;
     glDrawBuffers(1, DrawBuffers); // "1" is the size of DrawBuffers
     glBindVertexArray(handles["kern_VAO"]);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-  }
+
+
+  // }
 
   glBindFramebuffer(GL_FRAMEBUFFER, 0);
   DrawBuffers[0] = GL_LEFT;

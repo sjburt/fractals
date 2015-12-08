@@ -298,7 +298,7 @@ RenderContext::RenderContext() {
   glfwSwapInterval(1);
   mb.init();
   ac.init();
-  text = TextGL("stuff", 20, glm::vec3(.75, .75, 1));
+  text = TextGL("stuff", 30, glm::vec3(1, 1, 1));
 
   mb.reinit(screen_width, screen_height, aspect_ratio, cx, cy, cur_scale);
   sum_iters = 0;
