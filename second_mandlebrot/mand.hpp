@@ -31,7 +31,8 @@ class Mandlebrot {
   GLfloat g_textcoords[4][2] = {
       {0, 0}, {0, 1.0}, {1.0, 0}, {1.0, 1.0}};
 
-
+  int cur_width;
+  int cur_height;
 
  public:
   Mandlebrot(void);

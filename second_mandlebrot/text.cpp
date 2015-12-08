@@ -23,7 +23,7 @@ TextGL::TextGL(const char * fontname, int size, glm::vec3 color) {
   std::cout << "setting stuff up!\n";
   if (FT_Init_FreeType(&ft))
     std::cout << "ERROR: could not init freetype\n";
-  if (FT_New_Face(ft, "/usr/share/fonts/truetype/droid/DroidSans.ttf", 0, &face))
+  if (FT_New_Face(ft, "/usr/share/fonts/truetype/droid/DroidSansMono.ttf", 0, &face))
     std::cout << "Error: could not init face\n";
   FT_Set_Pixel_Sizes(face, 0, size);
 

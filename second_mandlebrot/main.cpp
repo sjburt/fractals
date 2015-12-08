@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <sstream>
 #include <vector>
 #include <iostream>
 #include <fstream>
@@ -298,7 +299,7 @@ RenderContext::RenderContext() {
   glfwSwapInterval(1);
   mb.init();
   ac.init();
-  text = TextGL("stuff", 30, glm::vec3(1, 1, 1));
+  text = TextGL("stuff", 20, glm::vec3(1, 1, 1));
 
   mb.reinit(screen_width, screen_height, aspect_ratio, cx, cy, cur_scale);
   sum_iters = 0;
@@ -314,7 +315,7 @@ int RenderContext::render(void) {
 
   mb.render(iter);
   sum_iters += iter;
-  text.print(hud, 10, 50, screen_width, screen_height);
+  text.print(hud, 10, 130, screen_width, screen_height);
 
   // float counters[] = {0};
   auto counters = ac.read();
@@ -338,18 +339,18 @@ int RenderContext::render(void) {
   glfwSwapBuffers(window);
   glfwPollEvents();
 
-  // auto p = get_xy(x, y);
-  // printf("I> x: %5i/%6.3f y: %5i/%6.3f (%6.3e,%6.3e) ", x, p.x, y, p.y,
-  //   pixels2[0], pixels2[1]);
-  // std::cout << std::endl;
-  // printf("K> x: %5i/%6.3f y: %5i/%6.3f (%6.3e,%6.3e,%6.3e,%6.3e) ", x, p.x, y, p.y,
-  //   pixels[0], pixels[1],pixels[2],pixels[3]);
-  // std::cout << std::endl;
+  char cursor_hud[256];
 
-  float mod = glm::clamp(14000.0f / time, .1f, 2.0f);
-  iter = glm::clamp(int(iter * mod), 1, 500) ;
+  auto p = get_xy(x, y);
+  snprintf(cursor_hud, sizeof(cursor_hud),
+   "x:%6.3fy:%6.3f (%6.3f,%6.3f)\n (%6.3e,%6.3e,%6.3e,%6.3e)",p.x, p.y,
+    pixels2[0], pixels2[1], pixels[0], pixels[1],pixels[2],pixels[3]);
 
-  snprintf(hud, sizeof(hud), "%5.2fms, %5E, %5i, %5i\n%5.3E, %6f, %6f \n",
+  float mod = glm::clamp(14000.0f / time, .3f, 1.5f);
+  iter = glm::clamp(int(iter * mod), 1, 50000) ;
+
+  snprintf(hud, sizeof(hud), "%s\n%5.2fms, %5E, %5i, %5i\n%5.3E, %6f, %6f \n",
+           cursor_hud,
            time/1000, double(counters[0]), iter, sum_iters, cur_scale, cx, cy);
 
   return 0;
@@ -371,7 +372,7 @@ void RenderContext::zoom(double yoffset) {
   auto old_scale = cur_scale;
   auto center = glm::dvec2(cx, cy);
   auto pos = get_xy(pos_x, pos_y);
-  cur_scale *= (yoffset < 0 ? 1.5 : (1 / 1.5));
+  cur_scale *= (yoffset < 0 ? 1.1 : (1 / 1.1));
 
   auto new_center = pos + (cur_scale / old_scale) * (center - pos);
   cx = new_center.x;
